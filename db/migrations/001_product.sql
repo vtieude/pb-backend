@@ -1,0 +1,9 @@
+-- +goose Up
+CREATE TABLE IF NOT EXISTS `product` (
+        `id` INT(10) NOT NULL AUTO_INCREMENT,
+        `name` VARCHAR(64) NOT NULL,
+        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+        `active` TINYINT(1) NOT NULL DEFAULT 1,
+        PRIMARY KEY (`id`)
+    );
