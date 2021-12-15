@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"pb-backend/graph/generated"
-	graph "pb-backend/graph/resolvers"
+	"pb-backend/graph"
+	"pb-backend/wiregen"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -39,19 +42,26 @@ func main() {
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
-
+	baseCtx := context.WithValue(context.Background(), "", "")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-	// app, err := wiregen.InitializeInit()
-	// config := graph.Config{Resolvers: app.Resolver}
-
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
-
+	app, err := wiregen.InitializeApp(baseCtx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	config := graph.Config{
+		Resolvers:  app.Resolver,
+		Directives: graph.DirectiveRoot{},
+		Complexity: graph.ComplexityRoot{},
+	}
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
+	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
+		return errors.New("Internal server error! : " + fmt.Sprint(err))
+	})
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/query", srv)
-
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }

@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
 	"pb-backend/graph/model"
+	"pb-backend/mymodels"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -13,6 +14,7 @@ import (
 
 type IUserService interface {
 	GetAllUsers(ctx context.Context) ([]*model.User, error)
+	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
 }
 type UserService struct {
 }
@@ -30,17 +32,21 @@ func (u *UserService) OpenConnectTion() {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 }
+func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	return &model.User{}, nil
+}
 func (u *UserService) GetAllUsers(ctx context.Context) ([]*model.User, error) {
 	var users []*model.User
 	// Open up our database connection.
-	db, err := sql.Open("mysql", "root:qweqwe@tcp(127.0.0.1:3306)/app_db")
+	db, err := sql.Open("mysql", "root:qweqwe@tcp(127.0.0.1:3307)/app_db")
 
 	// if there is an error opening the connection, handle it
 	if err != nil {
-		log.Print(err.Error())
+		fmt.Print(err.Error())
+		my := mymodels.MyError{Message: "cannot connect db"}
+		return nil, my.ReturnError()
 	}
 	defer db.Close()
-
 	// Execute the query
 	results, err := db.Query("SELECT id, username FROM user")
 	if err != nil {

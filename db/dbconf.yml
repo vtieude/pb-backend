@@ -1,6 +1,6 @@
 test:
   driver: mysql
-  open: root:@tcp(127.0.0.1:3306)/{app_db}
+  open: root:@tcp(127.0.0.1:3307)/{app_db}
 development:
   driver: mysql
-  open: root:qweqwe@tcp(localhost:3306)/app_db
+  open: root:qweqwe@tcp(localhost:3307)/app_db
