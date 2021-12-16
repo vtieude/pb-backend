@@ -9,6 +9,7 @@ package wiregen
 import (
 	"context"
 	"github.com/google/wire"
+	"pb-backend/db"
 	"pb-backend/graph"
 	"pb-backend/services"
 )
@@ -16,7 +17,10 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp(ctx context.Context) (*App, error) {
-	userService := &services.UserService{}
+	db := db_manager.OpenConnectTion()
+	userService := &services.UserService{
+		DB: db,
+	}
 	resolver := &graph.Resolver{
 		IUserService: userService,
 	}
@@ -29,6 +33,8 @@ func InitializeApp(ctx context.Context) (*App, error) {
 // wire.go:
 
 var serviceSet = wire.NewSet(services.NewUserService)
+
+var dbSet = wire.NewSet(db_manager.OpenConnectTion, wire.Bind(new(db_manager.IDb), new(*db_manager.DB)))
 
 type App struct {
 	Resolver *graph.Resolver

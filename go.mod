@@ -4,8 +4,10 @@ go 1.17
 
 require (
 	github.com/99designs/gqlgen v0.14.0
+	github.com/elgris/sqrl v0.0.0-20210727210741-7e0198b30236
 	github.com/go-chi/render v1.0.1
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/jmoiron/sqlx v1.3.4
 	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0
 	github.com/vektah/gqlparser/v2 v2.2.0

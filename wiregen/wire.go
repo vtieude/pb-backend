@@ -3,6 +3,7 @@ package wiregen
 
 import (
 	"context"
+	"pb-backend/db"
 	"pb-backend/graph"
 	"pb-backend/services"
 
@@ -12,6 +13,7 @@ import (
 var serviceSet = wire.NewSet(
 	services.NewUserService,
 )
+var dbSet = wire.NewSet(db_manager.OpenConnectTion, wire.Bind(new(db_manager.IDb), new(*db_manager.DB)))
 
 type App struct {
 	Resolver *graph.Resolver
@@ -19,6 +21,7 @@ type App struct {
 
 func InitializeApp(ctx context.Context) (*App, error) {
 	wire.Build(
+		dbSet,
 		wire.Struct(new(graph.Resolver), "*"),
 		wire.Struct(new(App), "*"),
 		serviceSet,

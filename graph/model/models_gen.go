@@ -9,3 +9,9 @@ type Friend struct {
 type NewUser struct {
 	Name string `json:"name"`
 }
+
+type User struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	FriendID string `json:"FriendId"`
+}
