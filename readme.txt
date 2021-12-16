@@ -24,3 +24,4 @@ go get -u github.com/go-sql-driver/mysql
 # docker build --tag docker-base-project .
 # docker run -d -p 3000:8080 --name go-server docker-base-project
 # mysqldump -u root -p app_db > test.sql
+xo schema mysql://root:qweqwe@localhost:3307/app_db?parseTime=true -o entities -e goose_db_version -e *.created_at -e updated_at

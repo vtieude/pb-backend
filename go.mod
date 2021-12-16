@@ -11,7 +11,11 @@ require (
 	github.com/vektah/gqlparser/v2 v2.2.0
 )
 
-require github.com/kr/pretty v0.2.1 // indirect
+require (
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.1-0.20211023094830-115ce09fd6b4 // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+)
 
 require (
 	github.com/agnivade/levenshtein v1.1.0 // indirect
@@ -28,8 +32,8 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/urfave/cli/v2 v2.1.1 // indirect
 	github.com/vektah/dataloaden v0.2.1-0.20190515034641-a19b9a6e7c9e // indirect
-	golang.org/x/mod v0.4.1 // indirect
-	golang.org/x/tools v0.0.0-20210114065538-d78b04bdf963 // indirect
+	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

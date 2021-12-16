@@ -56,8 +56,9 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+		FriendId func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Name     func(childComplexity int) int
 	}
 }
 
@@ -108,6 +109,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllUsers(childComplexity), true
+
+	case "User.FriendId":
+		if e.complexity.User.FriendId == nil {
+			break
+		}
+
+		return e.complexity.User.FriendId(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -200,6 +208,7 @@ var sources = []*ast.Source{
 type User {
   id: ID!
   name: String!
+  FriendId : String!
 }
 
 input NewUser {
@@ -518,6 +527,41 @@ func (ec *executionContext) _User_name(ctx context.Context, field graphql.Collec
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_FriendId(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FriendId, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1804,6 +1848,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "FriendId":
+			out.Values[i] = ec._User_FriendId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

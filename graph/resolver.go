@@ -15,7 +15,7 @@ type Resolver struct {
 	services.IUserService
 }
 
-func (r *queryResolver) User(ctx context.Context, obj *model.User) (*model.Friend, error) {
+func (r *queryResolver) Friend(ctx context.Context, obj *model.User) (*model.Friend, error) {
 	return &model.Friend{City: &obj.ID}, nil
 }
 
