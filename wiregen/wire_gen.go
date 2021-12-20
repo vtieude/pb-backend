@@ -11,6 +11,7 @@ import (
 	"github.com/google/wire"
 	"pb-backend/db"
 	"pb-backend/graph"
+	"pb-backend/graph/resolvers"
 	"pb-backend/services"
 )
 
@@ -21,8 +22,10 @@ func InitializeApp(ctx context.Context) (*App, error) {
 	userService := &services.UserService{
 		DB: db,
 	}
+	userResolver := &resolvers.UserResolver{}
 	resolver := &graph.Resolver{
 		IUserService: userService,
+		UserResolver: userResolver,
 	}
 	app := &App{
 		Resolver: resolver,
@@ -32,7 +35,7 @@ func InitializeApp(ctx context.Context) (*App, error) {
 
 // wire.go:
 
-var serviceSet = wire.NewSet(services.NewUserService)
+var serviceSet = wire.NewSet(services.NewUserService, resolvers.NewUserSet)
 
 var dbSet = wire.NewSet(db_manager.OpenConnectTion, wire.Bind(new(db_manager.IDb), new(*db_manager.DB)))
 

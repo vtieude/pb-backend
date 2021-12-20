@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"pb-backend/dataloader"
 	"pb-backend/graph"
 	"pb-backend/wiregen"
 	"time"
@@ -29,6 +30,7 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(dataloader.Middleware)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	r.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},

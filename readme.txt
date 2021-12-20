@@ -19,9 +19,12 @@ goose -dir db/migrations mysql "root:qweqwe@tcp(localhost:3307)/app-db?parseTime
 router go-chi (go get -u github.com/go-chi/chi/v5)
 xo generate entities (https://github.com/jlightning/xo)
 go get -u github.com/go-sql-driver/mysql
+go get github.com/vektah/dataloaden
 
 -----------------------------------------
 # docker build --tag docker-base-project .
 # docker run -d -p 3000:8080 --name go-server docker-base-project
 # mysqldump -u root -p app_db > test.sql
 xo schema mysql://root:qweqwe@localhost:3307/app_db?parseTime=true -o entities -e goose_db_version -e *.created_at -e updated_at
+go run github.com/99designs/gqlgen
+go run github.com/vektah/dataloaden UserLoader int *../entities.User

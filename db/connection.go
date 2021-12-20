@@ -3,6 +3,7 @@ package db_manager
 import (
 	"context"
 	"database/sql"
+	"pb-backend/graph/model"
 	"time"
 
 	"github.com/elgris/sqrl"
@@ -13,6 +14,7 @@ type IDb interface {
 	Select(ctx context.Context, dest interface{}, sqlizer sqrl.Sqlizer) error
 	Get(ctx context.Context, dest interface{}, sqlizer sqrl.Sqlizer) error
 	Exec(ctx context.Context, sqlizer sqrl.Sqlizer) (sql.Result, error)
+	AddPagination(sq *sqrl.SelectBuilder, pagination *model.Pagination) (*sqrl.SelectBuilder, error)
 }
 type iSqlxDb interface {
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
@@ -69,4 +71,17 @@ func (db *DB) Exec(ctx context.Context, sqlizer sqrl.Sqlizer) (sql.Result, error
 
 	res, err := sqlxDb.ExecContext(ctx, query, args...)
 	return res, err
+}
+
+func (db *DB) AddPagination(sq *sqrl.SelectBuilder, pagination *model.Pagination) (*sqrl.SelectBuilder, error) {
+	if pagination != nil {
+		if pagination.PerPage != nil && pagination.Page != nil {
+			offset := uint64((*pagination.Page - 1) * *pagination.PerPage)
+			sq = sq.Offset(offset).Limit(uint64(*pagination.PerPage))
+		}
+		if pagination.Sort != nil {
+			sq = sq.OrderBy(pagination.Sort...)
+		}
+	}
+	return sq, nil
 }

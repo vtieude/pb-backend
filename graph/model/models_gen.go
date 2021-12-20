@@ -10,8 +10,8 @@ type NewUser struct {
 	Name string `json:"name"`
 }
 
-type User struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	FriendID string `json:"FriendId"`
+type Pagination struct {
+	PerPage *int     `json:"PerPage"`
+	Page    *int     `json:"Page"`
+	Sort    []string `json:"Sort"`
 }

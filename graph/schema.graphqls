@@ -4,7 +4,6 @@
 type User {
   id: ID!
   username: String!
-  FriendId : String!
 }
 
 input NewUser {
@@ -13,4 +12,9 @@ input NewUser {
 
 type Friend {
   City: String
+}
+input Pagination {
+  PerPage: Int
+	Page:    Int
+	Sort:    [String!]
 }
