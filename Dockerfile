@@ -25,31 +25,19 @@
 ##
 ## Build
 ##
-FROM golang:1.16-buster AS build
+FROM golang:1.17
+RUN mkdir /go/src/pb-backend
+WORKDIR /go/src/pb-backend
+COPY . .
 
-WORKDIR /app
-
-COPY go.mod ./
-COPY go.sum ./
+run export GO111MODULE=off
+run export GOPATH=$HOME/go
+run export PATH=$PATH:$GOPATH/bin
 RUN go mod download
+run go mod tidy
 
- COPY . .
+RUN CGO_ENABLED=0 go build
 
-RUN go build -o /docker-base-project
-
-
-##
-## Deploy
-##
-FROM gcr.io/distroless/base-debian10
-
-WORKDIR /
-
-COPY --from=build /docker-base-project /docker-base-project
-
-EXPOSE 3000
-
-USER nonroot:nonroot
-
-ENTRYPOINT ["/docker-base-project"]
+CMD ["./pb-backend"]
+## our newly created binary executable
 

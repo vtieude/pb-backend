@@ -18,7 +18,7 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp(ctx context.Context) (*App, error) {
-	db := db_manager.OpenConnectTion()
+	db := db_manager.OpenConnectTion(ctx)
 	userService := &services.UserService{
 		DB: db,
 	}

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"pb-backend/dataloader"
+	"pb-backend/entities"
 	"pb-backend/graph"
 	"pb-backend/wiregen"
 	"time"
@@ -18,13 +19,17 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/rs/cors"
+	"gopkg.in/yaml.v2"
 )
 
 const defaultPort = "3000"
 
 func main() {
 	r := chi.NewRouter()
-
+	cfg, err := GetConfig()
+	if err != nil {
+		panic(err)
+	}
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -45,7 +50,8 @@ func main() {
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 	baseCtx := context.WithValue(context.Background(), "", "")
-	port := os.Getenv("PORT")
+	baseCtx = context.WithValue(baseCtx, entities.ConfigKey, cfg)
+	port := cfg.AppPort
 	if port == "" {
 		port = defaultPort
 	}
@@ -66,4 +72,17 @@ func main() {
 	r.Handle("/query", srv)
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func GetConfig() (entities.PbConfig, error) {
+	var config entities.PbConfig
+	source, err := ioutil.ReadFile("config.yml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(source, &config)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	return config, nil
 }

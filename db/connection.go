@@ -3,6 +3,8 @@ package db_manager
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"pb-backend/entities"
 	"pb-backend/graph/model"
 	"time"
 
@@ -28,7 +30,22 @@ type DB struct {
 
 var sqlxDB *DB
 
-func OpenConnectTion() *DB {
+func OpenConnectTion(ctx context.Context) *DB {
+	var cfg entities.PbConfig
+	cfg, ok := ctx.Value(entities.ConfigKey).(entities.PbConfig)
+	if ok {
+		dbConString := fmt.Sprintf("root:%s@tcp(%s)/%s?parseTime=true", cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		db, err := sqlx.Open("mysql", dbConString)
+		if err != nil {
+			panic(err)
+		}
+		// See "Important settings" section.
+		db.SetConnMaxLifetime(time.Minute * 3)
+		db.SetMaxOpenConns(10)
+		db.SetMaxIdleConns(10)
+		sqlxDB = &DB{DB: db}
+		return sqlxDB
+	}
 	db, err := sqlx.Open("mysql", "root:qweqwe@tcp(127.0.0.1:3307)/app_db?parseTime=true")
 	if err != nil {
 		panic(err)
