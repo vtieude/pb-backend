@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,6 +21,11 @@ import (
 	"github.com/go-chi/render"
 	"github.com/rs/cors"
 	"gopkg.in/yaml.v2"
+)
+
+var (
+	flags = flag.NewFlagSet("migrate", flag.ExitOnError)
+	dir   = flags.String("dir", "/pb-backend/db/migrations", "directory with migration files")
 )
 
 const defaultPort = "3000"
