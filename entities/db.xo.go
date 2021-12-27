@@ -8,6 +8,9 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"pb-backend/graph/model"
+
+	"github.com/elgris/sqrl"
 )
 
 var (
@@ -75,9 +78,11 @@ func convLogger(logger interface{}) func(string, ...interface{}) {
 //
 // This works with both database/sql.DB and database/sql.Tx.
 type DB interface {
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	QueryRowContext(ctx context.Context, dest interface{}, sqlizer sqrl.Sqlizer, args ...interface{}) error
+	QueryContext(ctx context.Context, dest interface{}, sqlizer sqrl.Sqlizer, args ...interface{}) error
+	ExecSqrlContext(ctx context.Context, sqlizer sqrl.Sqlizer, args ...interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	AddPagination(sq *sqrl.SelectBuilder, pagination *model.Pagination) (*sqrl.SelectBuilder, error)
 }
 
 // Error is an error.

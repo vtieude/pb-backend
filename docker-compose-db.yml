@@ -1,0 +1,36 @@
+version: '3'
+ 
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: db-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: qweqwe
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_pwd
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:
+
+
+
+#   version: '3'
+ 
+# services:
+#   db:
+#     image: mysql:5.7
+#     container_name: db
+#     environment:
+#       MYSQL_ROOT_PASSWORD: my_secret_password
+#       MYSQL_DATABASE: app_db
+#       MYSQL_USER: db_user
+#       MYSQL_PASSWORD: db_user_pass
+#     ports:
+#       - "6033:3306"
+#     volumes:
+#       - ./data/db:/var/lib/mysql
+

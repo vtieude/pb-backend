@@ -4,15 +4,17 @@ package entities
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/elgris/sqrl"
 )
 
 // User represents a row from 'app_db.user'.
 type User struct {
-	ID       int            `json:"id"`       // id
-	Username sql.NullString `json:"username"` // username
-	Password sql.NullString `json:"password"` // password
-	Email    sql.NullString `json:"email"`    // email
+	ID       int    `json:"id"`       // id
+	Username string `json:"username"` // username
+	Password string `json:"password"` // password
+	Email    string `json:"email"`    // email
+	Active   bool   `json:"active"`   // active
 	// xo fields
 	_exists, _deleted bool
 }
@@ -38,13 +40,13 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO app_db.user (` +
-		`username, password, email` +
+		`username, password, email, active` +
 		`) VALUES (` +
-		`?, ?, ?` +
+		`?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email)
-	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email)
+	logf(sqlstr, u.Username, u.Password, u.Email, u.Active)
+	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.Active)
 	if err != nil {
 		return logerror(err)
 	}
@@ -69,11 +71,11 @@ func (u *User) Update(ctx context.Context, db DB) error {
 	}
 	// update with primary key
 	const sqlstr = `UPDATE app_db.user SET ` +
-		`username = ?, password = ?, email = ? ` +
+		`username = ?, password = ?, email = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email, u.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.ID); err != nil {
+	logf(sqlstr, u.Username, u.Password, u.Email, u.Active, u.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.Active, u.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -95,15 +97,15 @@ func (u *User) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO app_db.user (` +
-		`id, username, password, email` +
+		`id, username, password, email, active` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`username = VALUES(username), password = VALUES(password), email = VALUES(email)`
+		`username = VALUES(username), password = VALUES(password), email = VALUES(email), active = VALUES(active)`
 	// run
-	logf(sqlstr, u.ID, u.Username, u.Password, u.Email)
-	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email); err != nil {
+	logf(sqlstr, u.ID, u.Username, u.Password, u.Email, u.Active)
+	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email, u.Active); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -132,13 +134,34 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
+// UserByEmail retrieves a row from 'app_db.user' as a User.
+//
+// Generated from index 'email'.
+func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`id, username, password, email, active ` +
+		`FROM app_db.user ` +
+		`WHERE email = ?`
+	// run
+	logf(sqlstr, email)
+	u := User{
+		_exists: true,
+	}
+	qb := sqrl.Expr(sqlstr, email)
+	if err := db.QueryRowContext(ctx, &u, qb); err != nil {
+		return nil, logerror(err)
+	}
+	return &u, nil
+}
+
 // UserByID retrieves a row from 'app_db.user' as a User.
 //
 // Generated from index 'user_id_pkey'.
 func UserByID(ctx context.Context, db DB, id int) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, username, password, email ` +
+		`id, username, password, email, active ` +
 		`FROM app_db.user ` +
 		`WHERE id = ?`
 	// run
@@ -146,7 +169,8 @@ func UserByID(ctx context.Context, db DB, id int) (*User, error) {
 	u := User{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&u.ID, &u.Username, &u.Password, &u.Email); err != nil {
+	qb := sqrl.Expr(sqlstr, id)
+	if err := db.QueryRowContext(ctx, &u, qb); err != nil {
 		return nil, logerror(err)
 	}
 	return &u, nil

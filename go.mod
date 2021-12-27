@@ -11,17 +11,21 @@ require (
 	github.com/rs/cors v1.8.0
 	github.com/rs/xid v1.3.0
 	github.com/vektah/gqlparser/v2 v2.2.0
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 )
 
 require (
 	github.com/kr/pretty v0.3.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.1-0.20211023094830-115ce09fd6b4 // indirect
+	github.com/lib/pq v1.10.4 // indirect
+	github.com/mattn/go-sqlite3 v1.14.9 // indirect
+	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 )
 
 require (
 	github.com/agnivade/levenshtein v1.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v1.5.4
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2 // indirect

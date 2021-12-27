@@ -1,27 +1,29 @@
 //go:build wireinject
+
 package wiregen
 
 import (
 	"context"
-	"pb-backend/db"
-	"pb-backend/graph"
-	"pb-backend/graph/resolvers"
-	"pb-backend/services"
-
 	"github.com/google/wire"
+	"log"
+	"pb-backend/entities"
+	"pb-backend/graph"
+	"pb-backend/modifies"
+	"pb-backend/services"
 )
 
 var serviceSet = wire.NewSet(
 	services.NewUserService,
-	resolvers.NewUserSet,
+	modifies.ModifiesSet,
 )
-var dbSet = wire.NewSet(db_manager.OpenConnectTion, wire.Bind(new(db_manager.IDb), new(*db_manager.DB)))
+var dbSet = wire.NewSet(entities.OpenConnectTion, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
 type App struct {
-	Resolver *graph.Resolver
+	Resolver       *graph.Resolver
+	CustomModifies *modifies.MyCustomHttpHandler
 }
 
-func InitializeApp(ctx context.Context) (*App, error) {
+func InitializeApp(ctx context.Context, log log.Logger) (*App, error) {
 	wire.Build(
 		dbSet,
 		wire.Struct(new(graph.Resolver), "*"),

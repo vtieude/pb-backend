@@ -2,12 +2,10 @@ package dataloader
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
-	"time"
-
 	"pb-backend/entities"
+	"time"
 )
 
 const loadersKey = "dataloaders"
@@ -33,10 +31,10 @@ func Middleware(next http.Handler) http.Handler {
 					userResult = []entities.User{
 						{
 							ID:       1,
-							Username: sql.NullString{String: "haha", Valid: true}},
+							Username: "haha"},
 						{
 							ID:       2,
-							Username: sql.NullString{String: "haha2222", Valid: true}},
+							Username: "test user 2"},
 					}
 					users := make([]*entities.User, len(ids))
 					fmt.Println("Find username ")
