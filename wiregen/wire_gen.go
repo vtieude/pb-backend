@@ -9,36 +9,40 @@ package wiregen
 import (
 	"context"
 	"github.com/google/wire"
-	"pb-backend/db"
+	"log"
+	"pb-backend/entities"
 	"pb-backend/graph"
-	"pb-backend/graph/resolvers"
+	"pb-backend/modifies"
 	"pb-backend/services"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(ctx context.Context) (*App, error) {
-	db := db_manager.OpenConnectTion(ctx)
+func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
+	dbConnection := entities.OpenConnectTion(ctx, log2)
 	userService := &services.UserService{
-		DB: db,
+		DB: dbConnection,
 	}
-	userResolver := &resolvers.UserResolver{}
 	resolver := &graph.Resolver{
 		IUserService: userService,
-		UserResolver: userResolver,
+	}
+	myCustomHttpHandler := &modifies.MyCustomHttpHandler{
+		DB: dbConnection,
 	}
 	app := &App{
-		Resolver: resolver,
+		Resolver:       resolver,
+		CustomModifies: myCustomHttpHandler,
 	}
 	return app, nil
 }
 
 // wire.go:
 
-var serviceSet = wire.NewSet(services.NewUserService, resolvers.NewUserSet)
+var serviceSet = wire.NewSet(services.NewUserService, modifies.ModifiesSet)
 
-var dbSet = wire.NewSet(db_manager.OpenConnectTion, wire.Bind(new(db_manager.IDb), new(*db_manager.DB)))
+var dbSet = wire.NewSet(entities.OpenConnectTion, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
 type App struct {
-	Resolver *graph.Resolver
+	Resolver       *graph.Resolver
+	CustomModifies *modifies.MyCustomHttpHandler
 }

@@ -4,15 +4,16 @@ package entities
 
 import (
 	"context"
-	"time"
+
+	"github.com/elgris/sqrl"
 )
 
 // Product represents a row from 'app_db.product'.
 type Product struct {
-	ID        int       `json:"id"`         // id
-	Name      string    `json:"name"`       // name
-	UpdatedAt time.Time `json:"updated_at"` // updated_at
-	Active    bool      `json:"active"`     // active
+	ID         int    `json:"id"`          // id
+	Name       string `json:"name"`        // name
+	ProductKey string `json:"product_key"` // product_key
+	Active     bool   `json:"active"`      // active
 	// xo fields
 	_exists, _deleted bool
 }
@@ -38,13 +39,13 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO app_db.product (` +
-		`name, updated_at, active` +
+		`name, product_key, active` +
 		`) VALUES (` +
 		`?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, p.Name, p.UpdatedAt, p.Active)
-	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.UpdatedAt, p.Active)
+	logf(sqlstr, p.Name, p.ProductKey, p.Active)
+	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active)
 	if err != nil {
 		return logerror(err)
 	}
@@ -69,11 +70,11 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	}
 	// update with primary key
 	const sqlstr = `UPDATE app_db.product SET ` +
-		`name = ?, updated_at = ?, active = ? ` +
+		`name = ?, product_key = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, p.Name, p.UpdatedAt, p.Active, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.UpdatedAt, p.Active, p.ID); err != nil {
+	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -95,15 +96,15 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO app_db.product (` +
-		`id, name, updated_at, active` +
+		`id, name, product_key, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`name = VALUES(name), updated_at = VALUES(updated_at), active = VALUES(active)`
+		`name = VALUES(name), product_key = VALUES(product_key), active = VALUES(active)`
 	// run
-	logf(sqlstr, p.ID, p.Name, p.UpdatedAt, p.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.UpdatedAt, p.Active); err != nil {
+	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.Active)
+	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.Active); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -138,7 +139,7 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, updated_at, active ` +
+		`id, name, product_key, active ` +
 		`FROM app_db.product ` +
 		`WHERE id = ?`
 	// run
@@ -146,7 +147,29 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	p := Product{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&p.ID, &p.Name, &p.UpdatedAt, &p.Active); err != nil {
+	qb := sqrl.Expr(sqlstr, id)
+	if err := db.QueryRowContext(ctx, &p, qb); err != nil {
+		return nil, logerror(err)
+	}
+	return &p, nil
+}
+
+// ProductByProductKey retrieves a row from 'app_db.product' as a Product.
+//
+// Generated from index 'product_key'.
+func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`id, name, product_key, active ` +
+		`FROM app_db.product ` +
+		`WHERE product_key = ?`
+	// run
+	logf(sqlstr, productKey)
+	p := Product{
+		_exists: true,
+	}
+	qb := sqrl.Expr(sqlstr, productKey)
+	if err := db.QueryRowContext(ctx, &p, qb); err != nil {
 		return nil, logerror(err)
 	}
 	return &p, nil

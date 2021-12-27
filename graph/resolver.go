@@ -1,9 +1,6 @@
 package graph
 
 import (
-	"context"
-	"pb-backend/entities"
-	"pb-backend/graph/model"
 	"pb-backend/services"
 )
 
@@ -14,14 +11,7 @@ import (
 
 type Resolver struct {
 	services.IUserService
-	UserResolver
 }
-
-func (r *queryResolver) Friend(ctx context.Context, obj *entities.User) (*model.Friend, error) {
-	return &model.Friend{City: &obj.Username.String}, nil
-}
-
-func (r *Resolver) User() UserResolver { return r.UserResolver }
 
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
