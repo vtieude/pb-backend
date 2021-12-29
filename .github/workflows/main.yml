@@ -12,7 +12,7 @@ jobs:
       - name: Install dependency
         run: go mod download
       - name: Unit test
-        run: make test
+        run: go build
         continue-on-error: false
   build:
     runs-on: [self-hosted, Linux]
