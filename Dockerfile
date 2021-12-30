@@ -47,6 +47,7 @@ USER appuser
 COPY --from=builder /go/src/pb-backend/pb-backend /app/
 COPY --from=builder /go/src/pb-backend/config.yml /app/
 WORKDIR /app
+EXPOSE 3000
 CMD ["./pb-backend"]
 
 
