@@ -81,7 +81,7 @@ func main() {
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/query", srv)
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe("localhost:"+port, r))
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
 func GetConfig() (entities.PbConfig, error) {
