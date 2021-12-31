@@ -58,9 +58,9 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 	baseCtx := context.WithValue(context.Background(), "", "")
 	baseCtx = context.WithValue(baseCtx, entities.ConfigKey, cfg)
-	port := cfg.AppPort
+	port := os.Getenv("PORT")
 	if port == "" {
-		port = os.Getenv("PORT")
+		port = cfg.AppPort
 		if port == "" {
 			port = defaultPort
 		}
