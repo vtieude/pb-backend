@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"pb-backend/dataloader"
 	"pb-backend/entities"
 	"pb-backend/graph"
@@ -59,7 +60,10 @@ func main() {
 	baseCtx = context.WithValue(baseCtx, entities.ConfigKey, cfg)
 	port := cfg.AppPort
 	if port == "" {
-		port = defaultPort
+		port = os.Getenv("PORT")
+		if port == "" {
+			port = defaultPort
+		}
 	}
 	app, err := wiregen.InitializeApp(baseCtx, *log.Default())
 	if err != nil {
