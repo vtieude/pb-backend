@@ -53,7 +53,7 @@ func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
 	var cfg PbConfig
 	cfg, ok := ctx.Value(ConfigKey).(PbConfig)
 	if ok {
-		dbConString := fmt.Sprintf("root:%s@tcp(%s)/%s?parseTime=true", cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		dbConString := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", cfg.DbUser, cfg.DbPsw, cfg.DbHost, cfg.DbName)
 		db, err := sqlx.Open("mysql", dbConString)
 		if err != nil {
 			panic(err)
