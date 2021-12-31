@@ -1,1 +1,1 @@
-web: bin/pb-backend
+web: pb-backend
