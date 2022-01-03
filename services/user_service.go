@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"pb-backend/consts"
 	"pb-backend/entities"
 	"pb-backend/graph/model"
@@ -21,7 +22,7 @@ const keyHassPwd = "wilson-pb-app"
 type IUserService interface {
 	GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error)
-	Login(ctx context.Context, email string, password string) (string, error)
+	Login(ctx context.Context, email string, password string) (*model.UserDto, error)
 }
 type UserService struct {
 	DB entities.DB
@@ -32,13 +33,16 @@ var NewUserService = wire.NewSet(wire.Struct(new(UserService), "*"), wire.Bind(n
 
 func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error) {
 	var existUsers entities.User
+	if !u.validEmail(input.Name) {
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
+	}
 	stss := sqrl.Select("email").From("user").Where(sqrl.Eq{"email": input.Name})
 	err := u.DB.QueryRowContext(ctx, &existUsers, stss)
 	if err != nil {
 		return nil, err
 	}
 	if existUsers.ID != 0 {
-		return nil, &model.MyError{"Email already exist"}
+		return nil, &model.MyError{Message: consts.ERR_USER_DUPPLICATE_EMAIL_ADDRESS}
 	}
 	newUsers := entities.User{
 		Username: input.Name,
@@ -65,23 +69,40 @@ func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Paginat
 
 }
 
-func (u *UserService) Login(ctx context.Context, email string, password string) (string, error) {
+func (u *UserService) Login(ctx context.Context, email string, password string) (*model.UserDto, error) {
 	password = strings.TrimSpace(password)
 	email = strings.TrimSpace(email)
-	if len(password) == 0 || len(email) == 0 {
-		return "", &model.MyError{Message: "Invalid email or password "}
+	if len(password) == 0 || len(email) == 0 || !u.validEmail(email) {
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
 	findUser, err := entities.UserByEmail(ctx, u.DB, email)
 	if err != nil {
-		return "", &model.MyError{Message: "User not found, " + string(err.Error())}
+		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND + string(err.Error())}
 	}
 	if findUser.ID == 0 {
-		return "", &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
+		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
 	}
 	if !u.checkPasswordHash(password, findUser.Password) {
-		return "", &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
+		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
 	}
-	return u.GenerateToken(*findUser)
+	userResult := model.UserDto{}
+	userRoleFiter := sqrl.Select("role.role_name").From("user_role")
+	userRoleFiter.Join("role on role.id = user_role.fk_role")
+	userRoleFiter.Where(sqrl.Eq{"user_role.fk_user": findUser.ID})
+	var roleName []string
+	err = u.DB.QueryContext(ctx, &roleName, userRoleFiter)
+	if err == nil && len(roleName) > 0 {
+		userResult.Role = roleName[0]
+	}
+	userResult.ID = findUser.ID
+	userResult.UserName = findUser.Username
+	userResult.Token, err = u.GenerateToken(*findUser)
+	return &userResult, err
+}
+
+func (u *UserService) validEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
 
 func (u *UserService) hashPassword(password string) (string, error) {

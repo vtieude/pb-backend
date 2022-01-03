@@ -1,4 +1,4 @@
 type Mutation {
   createUser(input: NewUser!): User! @auth
-  login(email: String!, password: String!): String!
+  login(email: String!, password: String!): UserDto!
 }

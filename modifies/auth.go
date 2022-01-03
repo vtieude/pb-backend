@@ -2,8 +2,10 @@ package modifies
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
+	"pb-backend/consts"
 	"pb-backend/entities"
 	"pb-backend/graph/model"
 	"pb-backend/services"
@@ -39,20 +41,25 @@ func (errorHandler *MyCustomHttpHandler) LoggingHandler(next http.Handler) http.
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println("panic occurred:", err)
-				next.ServeHTTP(w, r)
 				return
 			}
 		}()
 		auth = auth[len(bearer):]
 		claims, err := errorHandler.Authorization(r.Context(), auth)
 		if err != nil {
-			log.Println(err)
-			next.ServeHTTP(w, r)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Header().Set("Content-Type", "application/json")
+			resp := make(map[string]string)
+			resp["message"] = err.Error()
+			jsonResp, err := json.Marshal(resp)
+			if err != nil {
+				log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+			}
+			w.Write(jsonResp)
 			return
 		}
 		ctx := context.WithValue(r.Context(), authString("auth"), claims)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -60,16 +67,16 @@ func (errorHandler *MyCustomHttpHandler) LoggingHandler(next http.Handler) http.
 func (e *MyCustomHttpHandler) Authorization(ctx context.Context, token string) (entities.MyCustomClaims, error) {
 	customClaim, err := services.ParseToken(token)
 	if err != nil || customClaim.ID == 0 {
-		return customClaim, &model.MyError{Message: "Tài khoản đăng nhập đã hết hạn"}
+		return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
 	currentUser, err := entities.UserByID(ctx, e.DB, customClaim.ID)
 	if err != nil {
-		return customClaim, &model.MyError{Message: "Tài khoản đăng nhập đã hết hạn"}
+		return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
 	if currentUser.Username == currentUser.Username {
 		return customClaim, nil
 	}
-	return customClaim, &model.MyError{Message: "Tài khoản đăng nhập đã hết hạn"}
+	return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 }
 
 // // I return nil for the sake of example.

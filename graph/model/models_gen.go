@@ -15,3 +15,10 @@ type Pagination struct {
 	Page    *int     `json:"Page"`
 	Sort    []string `json:"Sort"`
 }
+
+type UserDto struct {
+	ID       int    `json:"id"`
+	Token    string `json:"token"`
+	Role     string `json:"role"`
+	UserName string `json:"userName"`
+}

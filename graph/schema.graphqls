@@ -20,3 +20,10 @@ input Pagination {
 	Page:    Int
 	Sort:    [String!]
 }
+
+type UserDto {
+  id: Int!
+  token: String!
+  role: String!
+  userName: String!
+}
