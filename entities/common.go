@@ -72,7 +72,7 @@ func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
 		// See "Important settings" section.
 		db.SetConnMaxLifetime(time.Minute * 3)
 		db.SetMaxOpenConns(10)
-		db.SetMaxIdleConns(10)
+		db.SetMaxIdleConns(0)
 		sqlxDB = &DBConnection{DB: db, log: log}
 		return sqlxDB
 	}
