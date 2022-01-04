@@ -4,6 +4,7 @@ DbName : "app_db"
 # DbHost: "db-mysql"
 DbHost: "127.0.0.1:3307"
 AppPort: "3000"
+AppProdEnv: true
 
 # DbUser: "sql10462371"
 # DbPsw : "DBXr6CAvmW"

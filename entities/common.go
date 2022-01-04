@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"pb-backend/graph/model"
 	"time"
 
@@ -16,11 +17,12 @@ import (
 const ConfigKey = "pbconfig"
 
 type PbConfig struct {
-	DbUser  string `yaml:"DbUser"`
-	DbPsw   string `yaml:"DbPsw"`
-	DbName  string `yaml:"DbName"`
-	DbHost  string `yaml:"DbHost"`
-	AppPort string `yaml:"AppPort"`
+	DbUser     string `yaml:"DbUser"`
+	DbPsw      string `yaml:"DbPsw"`
+	DbName     string `yaml:"DbName"`
+	DbHost     string `yaml:"DbHost"`
+	AppPort    string `yaml:"AppPort"`
+	AppProdEnv bool   `yaml:"AppProdEnv"`
 }
 
 type MyCustomClaims struct {
@@ -53,7 +55,16 @@ func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
 	var cfg PbConfig
 	cfg, ok := ctx.Value(ConfigKey).(PbConfig)
 	if ok {
-		dbConString := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", cfg.DbUser, cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		dbConString := ""
+		if cfg.AppProdEnv {
+			dbConString = os.Getenv("DATABASE_URL")
+			if dbConString == "" {
+				log.Fatal("$DATABASE_URL is not set")
+			}
+
+		} else {
+			dbConString = fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", cfg.DbUser, cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		}
 		db, err := sqlx.Open("mysql", dbConString)
 		if err != nil {
 			panic(err)
