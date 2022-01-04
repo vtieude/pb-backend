@@ -74,7 +74,6 @@ func main() {
 		Directives: graph.DirectiveRoot{},
 		Complexity: graph.ComplexityRoot{},
 	}
-
 	config.Directives.Auth = modifies.Auth
 	r.Use(app.CustomModifies.LoggingHandler)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
