@@ -74,7 +74,11 @@ func main() {
 		Directives: graph.DirectiveRoot{},
 		Complexity: graph.ComplexityRoot{},
 	}
-
+	dbConString := os.Getenv("DATABASE_URL")
+	if dbConString == "" {
+		log.Fatal("$DATABASE_URL is not set")
+	}
+	log.Fatal(dbConString)
 	config.Directives.Auth = modifies.Auth
 	r.Use(app.CustomModifies.LoggingHandler)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
