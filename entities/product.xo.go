@@ -8,7 +8,7 @@ import (
 	"github.com/elgris/sqrl"
 )
 
-// Product represents a row from 'app_db.product'.
+// Product represents a row from 'product'.
 type Product struct {
 	ID         int    `json:"id"`          // id
 	Name       string `json:"name"`        // name
@@ -38,7 +38,7 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.product (` +
+	const sqlstr = `INSERT INTO product (` +
 		`name, product_key, active` +
 		`) VALUES (` +
 		`?, ?, ?` +
@@ -69,7 +69,7 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE app_db.product SET ` +
+	const sqlstr = `UPDATE product SET ` +
 		`name = ?, product_key = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
@@ -95,7 +95,7 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.product (` +
+	const sqlstr = `INSERT INTO product (` +
 		`id, name, product_key, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?` +
@@ -121,7 +121,7 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.product ` +
+	const sqlstr = `DELETE FROM product ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, p.ID)
@@ -133,14 +133,14 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// ProductByID retrieves a row from 'app_db.product' as a Product.
+// ProductByID retrieves a row from 'product' as a Product.
 //
 // Generated from index 'product_id_pkey'.
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, name, product_key, active ` +
-		`FROM app_db.product ` +
+		`FROM product ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)
@@ -154,14 +154,14 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	return &p, nil
 }
 
-// ProductByProductKey retrieves a row from 'app_db.product' as a Product.
+// ProductByProductKey retrieves a row from 'product' as a Product.
 //
 // Generated from index 'product_key'.
 func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, name, product_key, active ` +
-		`FROM app_db.product ` +
+		`FROM product ` +
 		`WHERE product_key = ?`
 	// run
 	logf(sqlstr, productKey)

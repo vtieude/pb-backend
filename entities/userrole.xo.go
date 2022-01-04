@@ -8,7 +8,7 @@ import (
 	"github.com/elgris/sqrl"
 )
 
-// UserRole represents a row from 'app_db.user_role'.
+// UserRole represents a row from 'user_role'.
 type UserRole struct {
 	ID     int  `json:"id"`      // id
 	FkUser int  `json:"fk_user"` // fk_user
@@ -38,7 +38,7 @@ func (ur *UserRole) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.user_role (` +
+	const sqlstr = `INSERT INTO user_role (` +
 		`fk_user, fk_role, active` +
 		`) VALUES (` +
 		`?, ?, ?` +
@@ -69,7 +69,7 @@ func (ur *UserRole) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE app_db.user_role SET ` +
+	const sqlstr = `UPDATE user_role SET ` +
 		`fk_user = ?, fk_role = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
@@ -95,7 +95,7 @@ func (ur *UserRole) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.user_role (` +
+	const sqlstr = `INSERT INTO user_role (` +
 		`id, fk_user, fk_role, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?` +
@@ -121,7 +121,7 @@ func (ur *UserRole) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.user_role ` +
+	const sqlstr = `DELETE FROM user_role ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, ur.ID)
@@ -133,14 +133,14 @@ func (ur *UserRole) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// UserRoleByFkRole retrieves a row from 'app_db.user_role' as a UserRole.
+// UserRoleByFkRole retrieves a row from 'user_role' as a UserRole.
 //
 // Generated from index 'fk_role'.
 func UserRoleByFkRole(ctx context.Context, db DB, fkRole int) ([]*UserRole, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, fk_user, fk_role, active ` +
-		`FROM app_db.user_role ` +
+		`FROM user_role ` +
 		`WHERE fk_role = ?`
 	// run
 	logf(sqlstr, fkRole)
@@ -153,14 +153,14 @@ func UserRoleByFkRole(ctx context.Context, db DB, fkRole int) ([]*UserRole, erro
 	return res, nil
 }
 
-// UserRoleByFkUser retrieves a row from 'app_db.user_role' as a UserRole.
+// UserRoleByFkUser retrieves a row from 'user_role' as a UserRole.
 //
 // Generated from index 'fk_user'.
 func UserRoleByFkUser(ctx context.Context, db DB, fkUser int) ([]*UserRole, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, fk_user, fk_role, active ` +
-		`FROM app_db.user_role ` +
+		`FROM user_role ` +
 		`WHERE fk_user = ?`
 	// run
 	logf(sqlstr, fkUser)
@@ -173,14 +173,14 @@ func UserRoleByFkUser(ctx context.Context, db DB, fkUser int) ([]*UserRole, erro
 	return res, nil
 }
 
-// UserRoleByID retrieves a row from 'app_db.user_role' as a UserRole.
+// UserRoleByID retrieves a row from 'user_role' as a UserRole.
 //
 // Generated from index 'user_role_id_pkey'.
 func UserRoleByID(ctx context.Context, db DB, id int) (*UserRole, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, fk_user, fk_role, active ` +
-		`FROM app_db.user_role ` +
+		`FROM user_role ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

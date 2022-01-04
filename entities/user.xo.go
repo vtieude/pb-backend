@@ -8,7 +8,7 @@ import (
 	"github.com/elgris/sqrl"
 )
 
-// User represents a row from 'app_db.user'.
+// User represents a row from 'user'.
 type User struct {
 	ID       int    `json:"id"`       // id
 	Username string `json:"username"` // username
@@ -39,7 +39,7 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.user (` +
+	const sqlstr = `INSERT INTO user (` +
 		`username, password, email, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?` +
@@ -70,7 +70,7 @@ func (u *User) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE app_db.user SET ` +
+	const sqlstr = `UPDATE user SET ` +
 		`username = ?, password = ?, email = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
@@ -96,7 +96,7 @@ func (u *User) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.user (` +
+	const sqlstr = `INSERT INTO user (` +
 		`id, username, password, email, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?, ?` +
@@ -122,7 +122,7 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.user ` +
+	const sqlstr = `DELETE FROM user ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, u.ID)
@@ -134,14 +134,14 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// UserByEmail retrieves a row from 'app_db.user' as a User.
+// UserByEmail retrieves a row from 'user' as a User.
 //
 // Generated from index 'email'.
 func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, username, password, email, active ` +
-		`FROM app_db.user ` +
+		`FROM user ` +
 		`WHERE email = ?`
 	// run
 	logf(sqlstr, email)
@@ -155,14 +155,14 @@ func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	return &u, nil
 }
 
-// UserByID retrieves a row from 'app_db.user' as a User.
+// UserByID retrieves a row from 'user' as a User.
 //
 // Generated from index 'user_id_pkey'.
 func UserByID(ctx context.Context, db DB, id int) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, username, password, email, active ` +
-		`FROM app_db.user ` +
+		`FROM user ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

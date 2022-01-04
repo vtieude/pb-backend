@@ -8,7 +8,7 @@ import (
 	"github.com/elgris/sqrl"
 )
 
-// Role represents a row from 'app_db.role'.
+// Role represents a row from 'role'.
 type Role struct {
 	ID       int    `json:"id"`        // id
 	RoleName string `json:"role_name"` // role_name
@@ -37,7 +37,7 @@ func (r *Role) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.role (` +
+	const sqlstr = `INSERT INTO role (` +
 		`role_name, label` +
 		`) VALUES (` +
 		`?, ?` +
@@ -68,7 +68,7 @@ func (r *Role) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE app_db.role SET ` +
+	const sqlstr = `UPDATE role SET ` +
 		`role_name = ?, label = ? ` +
 		`WHERE id = ?`
 	// run
@@ -94,7 +94,7 @@ func (r *Role) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.role (` +
+	const sqlstr = `INSERT INTO role (` +
 		`id, role_name, label` +
 		`) VALUES (` +
 		`?, ?, ?` +
@@ -120,7 +120,7 @@ func (r *Role) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.role ` +
+	const sqlstr = `DELETE FROM role ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, r.ID)
@@ -132,14 +132,14 @@ func (r *Role) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// RoleByID retrieves a row from 'app_db.role' as a Role.
+// RoleByID retrieves a row from 'role' as a Role.
 //
 // Generated from index 'role_id_pkey'.
 func RoleByID(ctx context.Context, db DB, id int) (*Role, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, role_name, label ` +
-		`FROM app_db.role ` +
+		`FROM role ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)
