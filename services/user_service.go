@@ -75,28 +75,28 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 	if len(password) == 0 || len(email) == 0 || !u.validEmail(email) {
 		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
-	findUser, err := entities.UserByEmail(ctx, u.DB, email)
+	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, r.role_name as rolename").From("user u")
+	userRoleFilter.Join("user_role ur on ur.fk_user = u.id and u.active = true")
+	userRoleFilter.Join("role r on r.id = ur.fk_role")
+	userRoleFilter.Where(sqrl.Eq{"u.email": email})
+	var findUsers []model.UserRoleDto
+
+	err := u.DB.QueryContext(ctx, &findUsers, userRoleFilter)
 	if err != nil {
 		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND + string(err.Error())}
 	}
-	if findUser.ID == 0 {
+	if len(findUsers) == 0 {
 		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
 	}
-	if !u.checkPasswordHash(password, findUser.Password) {
+	userLogin := findUsers[0]
+	if !u.checkPasswordHash(password, userLogin.Password) {
 		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND}
 	}
 	userResult := model.UserDto{}
-	userRoleFiter := sqrl.Select("role.role_name").From("user_role")
-	userRoleFiter.Join("role on role.id = user_role.fk_role")
-	userRoleFiter.Where(sqrl.Eq{"user_role.fk_user": findUser.ID})
-	var roleName []string
-	err = u.DB.QueryContext(ctx, &roleName, userRoleFiter)
-	if err == nil && len(roleName) > 0 {
-		userResult.Role = roleName[0]
-	}
-	userResult.ID = findUser.ID
-	userResult.UserName = findUser.Username
-	userResult.Token, err = u.GenerateToken(*findUser)
+	userResult.Role = userLogin.RoleName
+	userResult.ID = userLogin.ID
+	userResult.UserName = userLogin.UserName
+	userResult.Token, err = u.GenerateToken(userLogin)
 	return &userResult, err
 }
 
@@ -116,9 +116,9 @@ func (u *UserService) checkPasswordHash(password, hash string) bool {
 }
 
 // ParseToken parses a jwt token and returns the username in it's claims
-func (u *UserService) GenerateToken(userLogin entities.User) (string, error) {
+func (u *UserService) GenerateToken(userLogin model.UserRoleDto) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, entities.MyCustomClaims{
-		Username: userLogin.Username,
+		Username: userLogin.UserName,
 		ID:       userLogin.ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().AddDate(0, 3, 0).Unix(),
