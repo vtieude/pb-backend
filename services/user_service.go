@@ -32,27 +32,52 @@ type UserService struct {
 var NewUserService = wire.NewSet(wire.Struct(new(UserService), "*"), wire.Bind(new(IUserService), new(*UserService)))
 
 func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error) {
-	var existUsers entities.User
-	if !u.validEmail(input.Name) {
+
+	if !u.validEmail(input.Email) || len(strings.TrimSpace(input.Password)) < 6 {
 		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
-	stss := sqrl.Select("email").From("user").Where(sqrl.Eq{"email": input.Name})
+	stss := sqrl.Select("count(*)").From("user").Where(sqrl.Eq{"email": input.Email})
+	var existUsers int
 	err := u.DB.QueryRowContext(ctx, &existUsers, stss)
 	if err != nil {
 		return nil, err
 	}
-	if existUsers.ID != 0 {
+	if existUsers != 0 {
 		return nil, &model.MyError{Message: consts.ERR_USER_DUPPLICATE_EMAIL_ADDRESS}
+	}
+	hsPwd, err := u.hashPassword(input.Password)
+	if err != nil {
+		return nil, err
 	}
 	newUsers := entities.User{
 		Username: input.Name,
+		Email:    input.Email,
+		Password: hsPwd,
+		Active:   true,
+	}
+	if input.RoleName == "" {
+		input.RoleName = "user"
+	}
+	roleFilter := sqrl.Select("id").From("role").Where(sqrl.Eq{"role_name": input.RoleName})
+	var idRole int
+	err = u.DB.QueryRowContext(ctx, &idRole, roleFilter)
+	if err != nil {
+		return nil, err
+	}
+	if idRole == 0 {
+		return nil, &model.MyError{Message: "Ivalid role"}
 	}
 	err = newUsers.Insert(ctx, u.DB)
 	// if there is an error opening the connection, handle it
 	if err != nil {
-		fmt.Print(err.Error())
 		return nil, err
 	}
+	roleUser := entities.UserRole{
+		FkUser: newUsers.ID,
+		FkRole: idRole,
+	}
+	roleUser.Insert(ctx, u.DB)
+
 	return &newUsers, nil
 }
 func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error) {

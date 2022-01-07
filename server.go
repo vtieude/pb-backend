@@ -12,7 +12,6 @@ import (
 	"pb-backend/dataloader"
 	"pb-backend/entities"
 	"pb-backend/graph"
-	"pb-backend/modifies"
 	"pb-backend/wiregen"
 	"time"
 
@@ -74,7 +73,8 @@ func main() {
 		Directives: graph.DirectiveRoot{},
 		Complexity: graph.ComplexityRoot{},
 	}
-	config.Directives.Auth = modifies.Auth
+	config.Directives.Auth = app.CustomModifies.AuthGraphql
+	config.Directives.AdminValidate = app.CustomModifies.AdminValidate
 	r.Use(app.CustomModifies.LoggingHandler)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {

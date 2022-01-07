@@ -42,7 +42,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	Auth func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	AdminValidate func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Auth          func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -237,7 +238,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/mutation.graphqls", Input: `type Mutation {
-  createUser(input: NewUser!): User! @auth
+  createUser(input: NewUser!): User! @adminValidate
   login(email: String!, password: String!): UserDto!
 }
 `, BuiltIn: false},
@@ -250,12 +251,16 @@ var sources = []*ast.Source{
 directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 # new directive
 directive @auth on FIELD_DEFINITION
+directive @adminValidate on FIELD_DEFINITION
 type User {
   id: ID!
 }
 
 input NewUser {
   name: String!
+  email: String!
+  password: String!
+  roleName: String!
 }
 
 type Friend {
@@ -448,10 +453,10 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 			return ec.resolvers.Mutation().CreateUser(rctx, args["input"].(model.NewUser))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Auth == nil {
-				return nil, errors.New("directive auth is not implemented")
+			if ec.directives.AdminValidate == nil {
+				return nil, errors.New("directive adminValidate is not implemented")
 			}
-			return ec.directives.Auth(ctx, nil, directive0)
+			return ec.directives.AdminValidate(ctx, nil, directive0)
 		}
 
 		tmp, err := directive1(rctx)
@@ -1967,6 +1972,30 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "roleName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleName"))
+			it.RoleName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

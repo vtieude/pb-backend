@@ -1,4 +1,4 @@
 type Mutation {
-  createUser(input: NewUser!): User! @auth
+  createUser(input: NewUser!): User! @adminValidate
   login(email: String!, password: String!): UserDto!
 }

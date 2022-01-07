@@ -4,12 +4,16 @@
 directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 # new directive
 directive @auth on FIELD_DEFINITION
+directive @adminValidate on FIELD_DEFINITION
 type User {
   id: ID!
 }
 
 input NewUser {
   name: String!
+  email: String!
+  password: String!
+  roleName: String!
 }
 
 type Friend {

@@ -7,7 +7,10 @@ type Friend struct {
 }
 
 type NewUser struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	RoleName string `json:"roleName"`
 }
 
 type Pagination struct {
