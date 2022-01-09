@@ -2,6 +2,7 @@ package modifies
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"pb-backend/consts"
@@ -41,7 +42,18 @@ func (errorHandler *MyCustomHttpHandler) LoggingHandler(next http.Handler) http.
 
 		ctx := context.WithValue(r.Context(), consts.SetCtxKey(consts.TOKEN_CTX_KEY), token)
 		if token != "" {
-			customClaim, _ := services.ParseToken(token)
+			customClaim, err := services.ParseToken(token)
+			if err != nil {
+				resp := make(map[string]string)
+				resp["message"] = "Unauthorized"
+				w.WriteHeader(401)
+				jsonResp, err := json.Marshal(resp)
+				if err != nil {
+					log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+				}
+				w.Write(jsonResp)
+				return
+			}
 			ctx = context.WithValue(ctx, consts.SetCtxKey(consts.USER_CTX_KEY), customClaim)
 		}
 
