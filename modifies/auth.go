@@ -16,8 +16,6 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
-const tokenKey = "token"
-
 type IMyCustomHttpHandler interface {
 	Authorization(ctx context.Context, token string) (entities.MyCustomClaims, error)
 	LoggingHandler(next http.Handler) http.Handler
@@ -41,11 +39,10 @@ func (errorHandler *MyCustomHttpHandler) LoggingHandler(next http.Handler) http.
 		}()
 		token := strings.Replace(r.Header.Get("Authorization"), "Bearer ", "", -1)
 
-		ctx := context.WithValue(r.Context(), authString(tokenKey), token)
+		ctx := context.WithValue(r.Context(), consts.SetCtxKey(consts.TOKEN_CTX_KEY), token)
 		if token != "" {
-			log.Println("user token call")
 			customClaim, _ := services.ParseToken(token)
-			ctx = context.WithValue(ctx, authString(consts.USER_CTX_KEY), customClaim)
+			ctx = context.WithValue(ctx, consts.SetCtxKey(consts.USER_CTX_KEY), customClaim)
 		}
 
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -53,19 +50,19 @@ func (errorHandler *MyCustomHttpHandler) LoggingHandler(next http.Handler) http.
 }
 
 // I return nil for the sake of example.
-func (e *MyCustomHttpHandler) Authorization(ctx context.Context, token string) (entities.MyCustomClaims, error) {
-	customClaim, err := services.ParseToken(token)
-	if err != nil || customClaim.ID == 0 {
-		return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
+func (e *MyCustomHttpHandler) Authorization(ctx context.Context) (entities.MyCustomClaims, error) {
+	customClaim, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil || customClaim.ID == 0 {
+		return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
 	currentUser, err := entities.UserByID(ctx, e.DB, customClaim.ID)
 	if err != nil {
-		return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
+		return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
 	if currentUser.Username == currentUser.Username {
-		return customClaim, nil
+		return *customClaim, nil
 	}
-	return customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
+	return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 }
 
 // // I return nil for the sake of example.
@@ -73,11 +70,8 @@ func (e *MyCustomHttpHandler) Authorization(ctx context.Context, token string) (
 // 	return nil
 // }
 
-type authString string
-
 func (handler *MyCustomHttpHandler) AuthGraphql(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
-	tokenData := CtxValue(ctx)
-	claims, err := handler.Authorization(ctx, tokenData)
+	claims, err := handler.Authorization(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -90,20 +84,15 @@ func (handler *MyCustomHttpHandler) AuthGraphql(ctx context.Context, obj interfa
 	return next(ctx)
 }
 func (handler *MyCustomHttpHandler) AdminValidate(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
-	tokenData := CtxValue(ctx)
+	tokenData := consts.CtxValue(ctx)
 	if tokenData == "" {
 		return nil, &gqlerror.Error{
 			Message: consts.ERR_USER_LOGIN_REQUIRED,
 		}
 	}
-	claims, err := handler.Authorization(ctx, tokenData)
-	if err != nil {
-		return nil, err
-	}
-	if claims.ID == 0 {
-		return nil, &gqlerror.Error{
-			Message: "Access Denied",
-		}
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil || claims.ID == 0 {
+		return claims, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
 	userFilter := sqrl.Select("count(*)").From("user u")
 	userFilter.Join("user_role ur on ur.fk_user = u.id")
@@ -111,7 +100,7 @@ func (handler *MyCustomHttpHandler) AdminValidate(ctx context.Context, obj inter
 	userFilter.Where(sqrl.Eq{"r.role_name": "admin"})
 
 	var roleCount = 0
-	err = handler.DB.QueryRowContext(ctx, &roleCount, userFilter)
+	err := handler.DB.QueryRowContext(ctx, &roleCount, userFilter)
 	if err != nil {
 		return nil, &gqlerror.Error{
 			Message: "Access Denied",
@@ -123,11 +112,4 @@ func (handler *MyCustomHttpHandler) AdminValidate(ctx context.Context, obj inter
 		}
 	}
 	return next(ctx)
-}
-func CtxValue(ctx context.Context) string {
-	raw, err := ctx.Value(authString(tokenKey)).(string)
-	if !err {
-		return ""
-	}
-	return raw
 }
