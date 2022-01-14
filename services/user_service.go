@@ -23,6 +23,7 @@ type IUserService interface {
 	GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error)
 	Login(ctx context.Context, email string, password string) (*model.UserDto, error)
+	Me(ctx context.Context) (*model.UserDto, error)
 }
 type UserService struct {
 	DB entities.DB
@@ -80,6 +81,32 @@ func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*ent
 
 	return &newUsers, nil
 }
+
+func (u *UserService) Me(ctx context.Context) (*model.UserDto, error) {
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
+	}
+	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, r.role_name as rolename").From("user u")
+	userRoleFilter.Join("user_role ur on ur.fk_user = u.id and u.active = true")
+	userRoleFilter.Join("role r on r.id = ur.fk_role")
+	userRoleFilter.Where(sqrl.Eq{"u.id": claims.ID})
+	var findUsers []model.UserRoleDto
+	err := u.DB.QueryContext(ctx, &findUsers, userRoleFilter)
+	if err != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_GET_INFORMATION + string(err.Error())}
+	}
+	if len(findUsers) == 0 {
+		return nil, &model.MyError{Message: consts.ERR_USER_GET_INFORMATION}
+	}
+	userLogin := findUsers[0]
+	userResult := model.UserDto{}
+	userResult.Role = userLogin.RoleName
+	userResult.ID = userLogin.ID
+	userResult.UserName = userLogin.UserName
+	return &userResult, nil
+}
+
 func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error) {
 	var users []*entities.User
 	stss := sqrl.Select("username, id").From("user")
@@ -105,7 +132,6 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 	userRoleFilter.Join("role r on r.id = ur.fk_role")
 	userRoleFilter.Where(sqrl.Eq{"u.email": email})
 	var findUsers []model.UserRoleDto
-
 	err := u.DB.QueryContext(ctx, &findUsers, userRoleFilter)
 	if err != nil {
 		return nil, &model.MyError{Message: consts.ERR_USER_NOT_FOUND + string(err.Error())}

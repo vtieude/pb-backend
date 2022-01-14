@@ -66,6 +66,7 @@ type ComplexityRoot struct {
 	Query struct {
 		GetAllProducts func(childComplexity int, page *model.Pagination) int
 		GetAllUsers    func(childComplexity int, page *model.Pagination) int
+		Me             func(childComplexity int) int
 	}
 
 	User struct {
@@ -88,6 +89,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetAllUsers(ctx context.Context, page *model.Pagination) ([]*entities.User, error)
 	GetAllProducts(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
+	Me(ctx context.Context) (*model.UserDto, error)
 }
 
 type executableSchema struct {
@@ -192,6 +194,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllUsers(childComplexity, args["page"].(*model.Pagination)), true
+
+	case "Query.Me":
+		if e.complexity.Query.Me == nil {
+			break
+		}
+
+		return e.complexity.Query.Me(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -301,6 +310,7 @@ var sources = []*ast.Source{
 	{Name: "graph/query.graphqls", Input: `type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
   GetAllProducts(page: Pagination): [ProductDto!]! @auth
+  Me: UserDto! @auth
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
 #
@@ -912,6 +922,61 @@ func (ec *executionContext) _Query_GetAllProducts(ctx context.Context, field gra
 	res := resTmp.([]*model.ProductDto)
 	fc.Result = res
 	return ec.marshalNProductDto2ᚕᚖpbᚑbackendᚋgraphᚋmodelᚐProductDtoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_Me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Me(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.UserDto); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *pb-backend/graph/model.UserDto`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserDto)
+	fc.Result = res
+	return ec.marshalNUserDto2ᚖpbᚑbackendᚋgraphᚋmodelᚐUserDto(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2544,6 +2609,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_GetAllProducts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "Me":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_Me(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
