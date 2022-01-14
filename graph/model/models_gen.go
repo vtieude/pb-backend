@@ -6,6 +6,11 @@ type Friend struct {
 	City *string `json:"City"`
 }
 
+type NewProduct struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+
 type NewUser struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -17,6 +22,12 @@ type Pagination struct {
 	PerPage *int     `json:"PerPage"`
 	Page    *int     `json:"Page"`
 	Sort    []string `json:"Sort"`
+}
+
+type ProductDto struct {
+	ID         int     `json:"id"`
+	Name       *string `json:"Name"`
+	ProductKey string  `json:"ProductKey"`
 }
 
 type UserDto struct {

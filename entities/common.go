@@ -51,7 +51,7 @@ type DBConnection struct {
 
 var sqlxDB *DBConnection
 
-func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
+func OpenConnection(ctx context.Context, log log.Logger) *DBConnection {
 	var cfg PbConfig
 	cfg, ok := ctx.Value(ConfigKey).(PbConfig)
 	if ok {

@@ -15,6 +15,12 @@ input NewUser {
   password: String!
   roleName: String!
 }
+input NewProduct {
+  name: String!
+  key: String!
+}
+
+
 
 type Friend {
   City: String
@@ -30,4 +36,9 @@ type UserDto {
   token: String!
   role: String!
   userName: String!
+}
+type ProductDto {
+  id: Int!
+  Name: String
+	ProductKey: String!
 }

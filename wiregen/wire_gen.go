@@ -19,7 +19,7 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
-	dbConnection := entities.OpenConnectTion(ctx, log2)
+	dbConnection := entities.OpenConnection(ctx, log2)
 	userService := &services.UserService{
 		DB: dbConnection,
 	}
@@ -38,9 +38,9 @@ func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
 
 // wire.go:
 
-var serviceSet = wire.NewSet(services.NewUserService, modifies.ModifiesSet)
+var serviceSet = wire.NewSet(services.NewUserService, services.NewProductService, modifies.ModifiesSet)
 
-var dbSet = wire.NewSet(entities.OpenConnectTion, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
+var dbSet = wire.NewSet(entities.OpenConnection, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
 type App struct {
 	Resolver       *graph.Resolver

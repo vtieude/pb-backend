@@ -1,3 +1,4 @@
 type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
+  GetAllProducts(page: Pagination): [ProductDto!]! @auth
 }
