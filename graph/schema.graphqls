@@ -25,9 +25,21 @@ input Pagination {
 	Sort:    [String!]
 }
 
+input OverviewUserSaleFilter {
+  UserName: String
+}
+
 type UserDto {
   id: Int!
   token: String!
   role: String!
   userName: String!
+}
+
+type OverviewUserSaleDto {
+  UserId: Int!
+  UserKey: String
+  UserRole: String!
+  TotalSaledProduct: Int!
+  EarningMoney: Float!
 }

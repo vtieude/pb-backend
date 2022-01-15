@@ -10,10 +10,11 @@ import (
 
 // Product represents a row from 'product'.
 type Product struct {
-	ID         int    `json:"id"`          // id
-	Name       string `json:"name"`        // name
-	ProductKey string `json:"product_key"` // product_key
-	Active     bool   `json:"active"`      // active
+	ID         int     `json:"id"`          // id
+	Name       string  `json:"name"`        // name
+	ProductKey string  `json:"product_key"` // product_key
+	Active     bool    `json:"active"`      // active
+	Price      float64 `json:"price"`       // price
 	// xo fields
 	_exists, _deleted bool
 }
@@ -39,13 +40,13 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product (` +
-		`name, product_key, active` +
+		`name, product_key, active, price` +
 		`) VALUES (` +
-		`?, ?, ?` +
+		`?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active)
-	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active)
+	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.Price)
+	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.Price)
 	if err != nil {
 		return logerror(err)
 	}
@@ -70,11 +71,11 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	}
 	// update with primary key
 	const sqlstr = `UPDATE product SET ` +
-		`name = ?, product_key = ?, active = ? ` +
+		`name = ?, product_key = ?, active = ?, price = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.ID); err != nil {
+	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.Price, p.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.Price, p.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -96,15 +97,15 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO product (` +
-		`id, name, product_key, active` +
+		`id, name, product_key, active, price` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`name = VALUES(name), product_key = VALUES(product_key), active = VALUES(active)`
+		`name = VALUES(name), product_key = VALUES(product_key), active = VALUES(active), price = VALUES(price)`
 	// run
-	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.Active); err != nil {
+	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.Active, p.Price)
+	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.Active, p.Price); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -139,7 +140,7 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active ` +
+		`id, name, product_key, active, price ` +
 		`FROM product ` +
 		`WHERE id = ?`
 	// run
@@ -160,7 +161,7 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active ` +
+		`id, name, product_key, active, price ` +
 		`FROM product ` +
 		`WHERE product_key = ?`
 	// run

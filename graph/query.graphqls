@@ -1,4 +1,5 @@
 type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
+  GetOverviewUsersSales(fitler: OverviewUserSaleFilter,page: Pagination): [OverviewUserSaleDto!]! @auth
   Me: UserDto! @auth
 }

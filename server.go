@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -78,7 +77,6 @@ func main() {
 	r.Use(app.CustomModifies.LoggingHandler)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
-		log.Println(fmt.Sprint(err))
 		return errors.New("Internal server error! : ")
 	})
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))

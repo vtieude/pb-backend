@@ -13,6 +13,18 @@ type NewUser struct {
 	RoleName string `json:"roleName"`
 }
 
+type OverviewUserSaleDto struct {
+	UserID            int     `json:"UserId"`
+	UserKey           *string `json:"UserKey"`
+	UserRole          string  `json:"UserRole"`
+	TotalSaledProduct int     `json:"TotalSaledProduct"`
+	EarningMoney      float64 `json:"EarningMoney"`
+}
+
+type OverviewUserSaleFilter struct {
+	UserName *string `json:"UserName"`
+}
+
 type Pagination struct {
 	PerPage *int     `json:"PerPage"`
 	Page    *int     `json:"Page"`
