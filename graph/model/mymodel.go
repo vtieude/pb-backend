@@ -19,3 +19,11 @@ type UserRoleDto struct {
 	UserName string `json:"username"`
 	RoleName string `json:"rolename"`
 }
+
+type OverviewUserSaleDto struct {
+	UserName          string  `json:"UserName" db:"UserName"`
+	UserEmail         *string `json:"UserEmail" db:"UserEmail"`
+	UserRole          string  `json:"UserRole" db:"UserRole"`
+	TotalSaledProduct int     `json:"TotalSaledProduct" db:"TotalSaledProduct"`
+	EarningMoney      float64 `json:"EarningMoney" db:"EarningMoney"`
+}

@@ -10,12 +10,38 @@ import (
 
 // UserRole represents a row from 'user_role'.
 type UserRole struct {
-	ID     int  `json:"id"`      // id
-	FkUser int  `json:"fk_user"` // fk_user
-	FkRole int  `json:"fk_role"` // fk_role
-	Active bool `json:"active"`  // active
+	ID     int  `json:"ID" db:"id"`          // id
+	FkUser int  `json:"FkUser" db:"fk_user"` // fk_user
+	FkRole int  `json:"FkRole" db:"fk_role"` // fk_role
+	Active bool `json:"Active" db:"active"`  // active
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterUserRole struct {
+	ID     *int  // id
+	FkUser *int  // fk_user
+	FkRole *int  // fk_role
+	Active *bool // active
+
+}
+
+// Apply filter to sqrl UserRole .
+func (ur *UserRole) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterUserRole) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.FkUser != nil {
+		sqrlBuilder.Where(sqrl.Eq{"fk_user": filter.FkUser})
+	}
+	if filter.FkRole != nil {
+		sqrlBuilder.Where(sqrl.Eq{"fk_role": filter.FkRole})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+
+	return true
 }
 
 // Exists returns true when the UserRole exists in the database.

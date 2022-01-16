@@ -10,13 +10,43 @@ import (
 
 // Product represents a row from 'product'.
 type Product struct {
-	ID         int     `json:"id"`          // id
-	Name       string  `json:"name"`        // name
-	ProductKey string  `json:"product_key"` // product_key
-	Active     bool    `json:"active"`      // active
-	Price      float64 `json:"price"`       // price
+	ID         int     `json:"ID" db:"id"`                  // id
+	Name       string  `json:"Name" db:"name"`              // name
+	ProductKey string  `json:"ProductKey" db:"product_key"` // product_key
+	Active     bool    `json:"Active" db:"active"`          // active
+	Price      float64 `json:"Price" db:"price"`            // price
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterProduct struct {
+	ID         *int     // id
+	Name       *string  // name
+	ProductKey *string  // product_key
+	Active     *bool    // active
+	Price      *float64 // price
+
+}
+
+// Apply filter to sqrl Product .
+func (p *Product) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterProduct) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.Name != nil {
+		sqrlBuilder.Where(sqrl.Eq{"name": filter.Name})
+	}
+	if filter.ProductKey != nil {
+		sqrlBuilder.Where(sqrl.Eq{"product_key": filter.ProductKey})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+	if filter.Price != nil {
+		sqrlBuilder.Where(sqrl.Eq{"price": filter.Price})
+	}
+
+	return true
 }
 
 // Exists returns true when the Product exists in the database.

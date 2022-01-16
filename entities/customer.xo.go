@@ -11,13 +11,43 @@ import (
 
 // Customer represents a row from 'customer'.
 type Customer struct {
-	ID           int             `json:"id"`            // id
-	CustomerName int             `json:"customer_name"` // customer_name
-	Phone        sql.NullInt64   `json:"phone"`         // phone
-	Address      sql.NullFloat64 `json:"address"`       // address
-	Active       bool            `json:"active"`        // active
+	ID           int             `json:"ID" db:"id"`                      // id
+	CustomerName int             `json:"CustomerName" db:"customer_name"` // customer_name
+	Phone        sql.NullInt64   `json:"Phone" db:"phone"`                // phone
+	Address      sql.NullFloat64 `json:"Address" db:"address"`            // address
+	Active       bool            `json:"Active" db:"active"`              // active
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterCustomer struct {
+	ID           *int             // id
+	CustomerName *int             // customer_name
+	Phone        *sql.NullInt64   // phone
+	Address      *sql.NullFloat64 // address
+	Active       *bool            // active
+
+}
+
+// Apply filter to sqrl Customer .
+func (c *Customer) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterCustomer) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.CustomerName != nil {
+		sqrlBuilder.Where(sqrl.Eq{"customer_name": filter.CustomerName})
+	}
+	if filter.Phone != nil {
+		sqrlBuilder.Where(sqrl.Eq{"phone": filter.Phone})
+	}
+	if filter.Address != nil {
+		sqrlBuilder.Where(sqrl.Eq{"address": filter.Address})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+
+	return true
 }
 
 // Exists returns true when the Customer exists in the database.

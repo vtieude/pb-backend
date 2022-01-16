@@ -161,35 +161,35 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["password"].(string)), true
 
-	case "OverviewUserSaleDto.earning_money":
+	case "OverviewUserSaleDto.EarningMoney":
 		if e.complexity.OverviewUserSaleDto.EarningMoney == nil {
 			break
 		}
 
 		return e.complexity.OverviewUserSaleDto.EarningMoney(childComplexity), true
 
-	case "OverviewUserSaleDto.total_saled_product":
+	case "OverviewUserSaleDto.TotalSaledProduct":
 		if e.complexity.OverviewUserSaleDto.TotalSaledProduct == nil {
 			break
 		}
 
 		return e.complexity.OverviewUserSaleDto.TotalSaledProduct(childComplexity), true
 
-	case "OverviewUserSaleDto.user_email":
+	case "OverviewUserSaleDto.UserEmail":
 		if e.complexity.OverviewUserSaleDto.UserEmail == nil {
 			break
 		}
 
 		return e.complexity.OverviewUserSaleDto.UserEmail(childComplexity), true
 
-	case "OverviewUserSaleDto.user_name":
+	case "OverviewUserSaleDto.UserName":
 		if e.complexity.OverviewUserSaleDto.UserName == nil {
 			break
 		}
 
 		return e.complexity.OverviewUserSaleDto.UserName(childComplexity), true
 
-	case "OverviewUserSaleDto.user_role":
+	case "OverviewUserSaleDto.UserRole":
 		if e.complexity.OverviewUserSaleDto.UserRole == nil {
 			break
 		}
@@ -421,11 +421,11 @@ type UserDto {
 }
 
 type OverviewUserSaleDto {
-  user_name: String!
-  user_email: String
-  user_role: String!
-  total_saled_product: Int!
-  earning_money: Float!
+  UserName: String!   
+  UserEmail: String
+  UserRole: String!
+  TotalSaledProduct: Int!
+  EarningMoney: Float!
 }
 
 type ProductDto {
@@ -799,7 +799,7 @@ func (ec *executionContext) _Mutation_createNewProduct(ctx context.Context, fiel
 	return ec.marshalNProductDto2ᚖpbᚑbackendᚋgraphᚋmodelᚐProductDto(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OverviewUserSaleDto_user_name(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _OverviewUserSaleDto_UserName(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -834,7 +834,7 @@ func (ec *executionContext) _OverviewUserSaleDto_user_name(ctx context.Context, 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OverviewUserSaleDto_user_email(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _OverviewUserSaleDto_UserEmail(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -866,7 +866,7 @@ func (ec *executionContext) _OverviewUserSaleDto_user_email(ctx context.Context,
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OverviewUserSaleDto_user_role(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _OverviewUserSaleDto_UserRole(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -901,7 +901,7 @@ func (ec *executionContext) _OverviewUserSaleDto_user_role(ctx context.Context, 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OverviewUserSaleDto_total_saled_product(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _OverviewUserSaleDto_TotalSaledProduct(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -936,7 +936,7 @@ func (ec *executionContext) _OverviewUserSaleDto_total_saled_product(ctx context
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _OverviewUserSaleDto_earning_money(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _OverviewUserSaleDto_EarningMoney(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2936,9 +2936,9 @@ func (ec *executionContext) _OverviewUserSaleDto(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("OverviewUserSaleDto")
-		case "user_name":
+		case "UserName":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OverviewUserSaleDto_user_name(ctx, field, obj)
+				return ec._OverviewUserSaleDto_UserName(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -2946,26 +2946,16 @@ func (ec *executionContext) _OverviewUserSaleDto(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "user_email":
+		case "UserEmail":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OverviewUserSaleDto_user_email(ctx, field, obj)
+				return ec._OverviewUserSaleDto_UserEmail(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "user_role":
+		case "UserRole":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OverviewUserSaleDto_user_role(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "total_saled_product":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OverviewUserSaleDto_total_saled_product(ctx, field, obj)
+				return ec._OverviewUserSaleDto_UserRole(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -2973,9 +2963,19 @@ func (ec *executionContext) _OverviewUserSaleDto(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "earning_money":
+		case "TotalSaledProduct":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OverviewUserSaleDto_earning_money(ctx, field, obj)
+				return ec._OverviewUserSaleDto_TotalSaledProduct(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "EarningMoney":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._OverviewUserSaleDto_EarningMoney(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)

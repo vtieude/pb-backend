@@ -2,17 +2,35 @@
 {{- if $t.Comment -}}
 // {{ $t.Comment | eval $t.GoName }}
 {{- else -}}
-// {{ $t.GoName }} represents a row from '{{ schema $t.SQLName }}'.
+// {{ $t.GoName }} represents a row from '{{ $t.SQLName }}'.
 {{- end }}
 type {{ $t.GoName }} struct {
 {{ range $t.Fields -}}
-	{{ field . }}
+	{{ .GoName }} {{  .Type }} `json:"{{ .GoName }}" db:"{{ .SQLName}}"` // {{.SQLName}}
 {{ end }}
 {{- if $t.PrimaryKeys -}}
 	// xo fields
 	_exists, _deleted bool
 {{ end -}}
 }
+
+type Filter{{ $t.GoName }} struct {
+{{ range $t.Fields -}}
+	{{ .GoName }} *{{  .Type }} // {{.SQLName}}
+{{ end }}
+}
+
+// Apply filter to sqrl {{ $t.GoName }} .
+func ({{ short $t }} *{{ $t.GoName }}) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter Filter{{ $t.GoName }}) bool {
+	{{ range $t.Fields -}}
+		if filter.{{ .GoName }} != nil {
+			sqrlBuilder.Where(sqrl.Eq{ "{{.SQLName}}" : filter.{{ .GoName }} })
+		}
+	{{ end }}
+
+	return true
+}
+
 
 {{ if $t.PrimaryKeys -}}
 // Exists returns true when the {{ $t.GoName }} exists in the database.

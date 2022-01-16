@@ -10,11 +10,33 @@ import (
 
 // Role represents a row from 'role'.
 type Role struct {
-	ID       int    `json:"id"`        // id
-	RoleName string `json:"role_name"` // role_name
-	Label    string `json:"label"`     // label
+	ID       int    `json:"ID" db:"id"`              // id
+	RoleName string `json:"RoleName" db:"role_name"` // role_name
+	Label    string `json:"Label" db:"label"`        // label
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterRole struct {
+	ID       *int    // id
+	RoleName *string // role_name
+	Label    *string // label
+
+}
+
+// Apply filter to sqrl Role .
+func (r *Role) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterRole) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.RoleName != nil {
+		sqrlBuilder.Where(sqrl.Eq{"role_name": filter.RoleName})
+	}
+	if filter.Label != nil {
+		sqrlBuilder.Where(sqrl.Eq{"label": filter.Label})
+	}
+
+	return true
 }
 
 // Exists returns true when the Role exists in the database.

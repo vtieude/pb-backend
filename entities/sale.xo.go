@@ -12,17 +12,63 @@ import (
 
 // Sale represents a row from 'sale'.
 type Sale struct {
-	ID         int            `json:"id"`          // id
-	FkUser     int            `json:"fk_user"`     // fk_user
-	FkCustomer sql.NullInt64  `json:"fk_customer"` // fk_customer
-	FkProduct  sql.NullInt64  `json:"fk_product"`  // fk_product
-	Price      float64        `json:"price"`       // price
-	Note       sql.NullString `json:"note"`        // note
-	SaleStatus NullSaleStatus `json:"sale_status"` // sale_status
-	SaledDate  time.Time      `json:"saled_date"`  // saled_date
-	Active     bool           `json:"active"`      // active
+	ID         int            `json:"ID" db:"id"`                  // id
+	FkUser     int            `json:"FkUser" db:"fk_user"`         // fk_user
+	FkCustomer sql.NullInt64  `json:"FkCustomer" db:"fk_customer"` // fk_customer
+	FkProduct  sql.NullInt64  `json:"FkProduct" db:"fk_product"`   // fk_product
+	Price      float64        `json:"Price" db:"price"`            // price
+	Note       sql.NullString `json:"Note" db:"note"`              // note
+	SaleStatus NullSaleStatus `json:"SaleStatus" db:"sale_status"` // sale_status
+	SaledDate  time.Time      `json:"SaledDate" db:"saled_date"`   // saled_date
+	Active     bool           `json:"Active" db:"active"`          // active
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterSale struct {
+	ID         *int            // id
+	FkUser     *int            // fk_user
+	FkCustomer *sql.NullInt64  // fk_customer
+	FkProduct  *sql.NullInt64  // fk_product
+	Price      *float64        // price
+	Note       *sql.NullString // note
+	SaleStatus *NullSaleStatus // sale_status
+	SaledDate  *time.Time      // saled_date
+	Active     *bool           // active
+
+}
+
+// Apply filter to sqrl Sale .
+func (s *Sale) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterSale) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.FkUser != nil {
+		sqrlBuilder.Where(sqrl.Eq{"fk_user": filter.FkUser})
+	}
+	if filter.FkCustomer != nil {
+		sqrlBuilder.Where(sqrl.Eq{"fk_customer": filter.FkCustomer})
+	}
+	if filter.FkProduct != nil {
+		sqrlBuilder.Where(sqrl.Eq{"fk_product": filter.FkProduct})
+	}
+	if filter.Price != nil {
+		sqrlBuilder.Where(sqrl.Eq{"price": filter.Price})
+	}
+	if filter.Note != nil {
+		sqrlBuilder.Where(sqrl.Eq{"note": filter.Note})
+	}
+	if filter.SaleStatus != nil {
+		sqrlBuilder.Where(sqrl.Eq{"sale_status": filter.SaleStatus})
+	}
+	if filter.SaledDate != nil {
+		sqrlBuilder.Where(sqrl.Eq{"saled_date": filter.SaledDate})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+
+	return true
 }
 
 // Exists returns true when the Sale exists in the database.

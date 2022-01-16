@@ -10,13 +10,43 @@ import (
 
 // User represents a row from 'user'.
 type User struct {
-	ID       int    `json:"id"`       // id
-	Username string `json:"username"` // username
-	Password string `json:"password"` // password
-	Email    string `json:"email"`    // email
-	Active   bool   `json:"active"`   // active
+	ID       int    `json:"ID" db:"id"`             // id
+	Username string `json:"Username" db:"username"` // username
+	Password string `json:"Password" db:"password"` // password
+	Email    string `json:"Email" db:"email"`       // email
+	Active   bool   `json:"Active" db:"active"`     // active
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterUser struct {
+	ID       *int    // id
+	Username *string // username
+	Password *string // password
+	Email    *string // email
+	Active   *bool   // active
+
+}
+
+// Apply filter to sqrl User .
+func (u *User) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterUser) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.Username != nil {
+		sqrlBuilder.Where(sqrl.Eq{"username": filter.Username})
+	}
+	if filter.Password != nil {
+		sqrlBuilder.Where(sqrl.Eq{"password": filter.Password})
+	}
+	if filter.Email != nil {
+		sqrlBuilder.Where(sqrl.Eq{"email": filter.Email})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+
+	return true
 }
 
 // Exists returns true when the User exists in the database.

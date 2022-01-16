@@ -22,14 +22,6 @@ type NewUser struct {
 	RoleName string `json:"roleName"`
 }
 
-type OverviewUserSaleDto struct {
-	UserName          string  `json:"user_name"`
-	UserEmail         *string `json:"user_email"`
-	UserRole          string  `json:"user_role"`
-	TotalSaledProduct int     `json:"total_saled_product"`
-	EarningMoney      float64 `json:"earning_money"`
-}
-
 type OverviewUserSaleFilter struct {
 	UserName *string    `json:"UserName"`
 	DateTime *time.Time `json:"DateTime"`
