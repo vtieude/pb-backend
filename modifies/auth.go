@@ -18,7 +18,7 @@ import (
 )
 
 type IMyCustomHttpHandler interface {
-	Authorization(ctx context.Context, token string) (entities.MyCustomClaims, error)
+	Authorization(ctx context.Context) (entities.MyCustomClaims, error)
 	LoggingHandler(next http.Handler) http.Handler
 	AuthGraphql(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error)
 	AdminValidate(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error)

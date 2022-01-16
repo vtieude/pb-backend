@@ -14,9 +14,11 @@ import (
 
 var serviceSet = wire.NewSet(
 	services.NewUserService,
+	services.NewProductService,
+	services.NewSaleService,
 	modifies.ModifiesSet,
 )
-var dbSet = wire.NewSet(entities.OpenConnectTion, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
+var dbSet = wire.NewSet(entities.OpenConnection, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
 type App struct {
 	Resolver       *graph.Resolver

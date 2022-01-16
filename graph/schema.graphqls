@@ -5,6 +5,10 @@ directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | I
 # new directive
 directive @auth on FIELD_DEFINITION
 directive @adminValidate on FIELD_DEFINITION
+
+"DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
+scalar Time
+
 type User {
   id: ID!
 }
@@ -15,6 +19,12 @@ input NewUser {
   password: String!
   roleName: String!
 }
+input NewProduct {
+  name: String!
+  key: String!
+}
+
+
 
 type Friend {
   City: String
@@ -27,6 +37,7 @@ input Pagination {
 
 input OverviewUserSaleFilter {
   UserName: String
+  DateTime: Time
 }
 
 type UserDto {
@@ -37,9 +48,15 @@ type UserDto {
 }
 
 type OverviewUserSaleDto {
-  UserId: Int!
-  UserKey: String
-  UserRole: String!
-  TotalSaledProduct: Int!
-  EarningMoney: Float!
+  user_name: String!
+  user_email: String
+  user_role: String!
+  total_saled_product: Int!
+  earning_money: Float!
+}
+
+type ProductDto {
+  id: Int!
+  Name: String
+	ProductKey: String!
 }

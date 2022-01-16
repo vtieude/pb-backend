@@ -21,7 +21,6 @@ const keyHassPwd = "wilson-pb-app"
 
 type IUserService interface {
 	GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error)
-	GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, pagination *model.Pagination) ([]*model.OverviewUserSaleDto, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error)
 	Login(ctx context.Context, email string, password string) (*model.UserDto, error)
 	Me(ctx context.Context) (*model.UserDto, error)
@@ -120,24 +119,6 @@ func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Paginat
 	}
 	return users, nil
 
-}
-
-func (u *UserService) GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, pagination *model.Pagination) ([]*model.OverviewUserSaleDto, error) {
-	var users []*model.OverviewUserSaleDto
-	stss := sqrl.Select("username, id").From("sale")
-	u.DB.AddPagination(stss, pagination)
-	if fitler != nil {
-		if fitler.UserName != nil {
-			stss.Where(sqrl.Eq{"username": fitler.UserName})
-		}
-	}
-	err := u.DB.QueryContext(ctx, &users, stss)
-	// if there is an error opening the connection, handle it
-	if err != nil {
-		fmt.Print(err.Error())
-		return nil, err
-	}
-	return users, nil
 }
 
 func (u *UserService) Login(ctx context.Context, email string, password string) (*model.UserDto, error) {

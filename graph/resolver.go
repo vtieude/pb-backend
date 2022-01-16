@@ -11,6 +11,8 @@ import (
 
 type Resolver struct {
 	services.IUserService
+	services.IProductService
+	services.ISaleService
 }
 
 // Mutation returns graph.MutationResolver implementation.

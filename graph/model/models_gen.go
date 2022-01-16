@@ -2,8 +2,17 @@
 
 package model
 
+import (
+	"time"
+)
+
 type Friend struct {
 	City *string `json:"City"`
+}
+
+type NewProduct struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
 }
 
 type NewUser struct {
@@ -14,21 +23,28 @@ type NewUser struct {
 }
 
 type OverviewUserSaleDto struct {
-	UserID            int     `json:"UserId"`
-	UserKey           *string `json:"UserKey"`
-	UserRole          string  `json:"UserRole"`
-	TotalSaledProduct int     `json:"TotalSaledProduct"`
-	EarningMoney      float64 `json:"EarningMoney"`
+	UserName          string  `json:"user_name"`
+	UserEmail         *string `json:"user_email"`
+	UserRole          string  `json:"user_role"`
+	TotalSaledProduct int     `json:"total_saled_product"`
+	EarningMoney      float64 `json:"earning_money"`
 }
 
 type OverviewUserSaleFilter struct {
-	UserName *string `json:"UserName"`
+	UserName *string    `json:"UserName"`
+	DateTime *time.Time `json:"DateTime"`
 }
 
 type Pagination struct {
 	PerPage *int     `json:"PerPage"`
 	Page    *int     `json:"Page"`
 	Sort    []string `json:"Sort"`
+}
+
+type ProductDto struct {
+	ID         int     `json:"id"`
+	Name       *string `json:"Name"`
+	ProductKey string  `json:"ProductKey"`
 }
 
 type UserDto struct {
