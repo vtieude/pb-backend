@@ -106,10 +106,9 @@ func (handler *MyCustomHttpHandler) AdminValidate(ctx context.Context, obj inter
 	if errParse != nil || claims.ID == 0 {
 		return claims, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
-	userFilter := sqrl.Select("count(*)").From("user u")
-	userFilter.Join("user_role ur on ur.fk_user = u.id")
-	userFilter.Join("role r on ur.fk_role = r.id").Where(sqrl.Eq{"u.id": claims.ID})
-	userFilter.Where(sqrl.Eq{"r.role_name": "admin"})
+	adminRole :=[2]string{consts.ROLE_USER_ADMIN, consts.ROLE_USER_SUPER_ADMIN}
+	userFilter := sqrl.Select("count(*)").From("user u").
+	Where(sqrl.Eq{"u.id": claims.ID}).Where(sqrl.Eq{"u.role": adminRole})
 
 	var roleCount = 0
 	err := handler.DB.QueryRowContext(ctx, &roleCount, userFilter)

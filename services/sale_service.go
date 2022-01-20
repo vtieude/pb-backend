@@ -24,10 +24,8 @@ var NewSaleService = wire.NewSet(wire.Struct(new(SaleService), "*"), wire.Bind(n
 func (s *SaleService) GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, pagination *model.Pagination) ([]*model.OverviewUserSaleDto, error) {
 	// Todo
 	var users []*model.OverviewUserSaleDto
-	stss := sqrl.Select(" u.username UserName, u.email UserEmail, r.Label as UserRole, count(s.id) TotalSaledProduct, sum(s.price) EarningMoney").
-		From("sale s").Join("user u on u.id = s.fk_user").
-		Join("user_role ur on ur.fk_user = u.id").
-		Join("role r on r.id = ur.fk_role")
+	stss := sqrl.Select(" u.username UserName, u.email UserEmail, u.role_label as UserRole, count(s.id) TotalSaledProduct, sum(s.price) EarningMoney").
+		From("sale s").Join("user u on u.id = s.fk_user")
 	stss.Where(sqrl.And{
 		sqrl.Eq{"s.active": "true"},
 		sqrl.Eq{"s.sale_status": entities.SaleStatusSaled},
@@ -41,7 +39,7 @@ func (s *SaleService) GetOverviewUsersSales(ctx context.Context, fitler *model.O
 			stss.Where(sqrl.GtOrEq{"s.saled_date": helper.BeginningOfMonth(*fitler.DateTime)})
 		}
 	}
-	stss.GroupBy("s.id, s.price, r.Label")
+	stss.GroupBy("s.id, s.price")
 	err := s.DB.QueryContext(ctx, &users, stss)
 	// if there is an error opening the connection, handle it
 	if err != nil {

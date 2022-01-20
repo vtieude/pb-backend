@@ -54,31 +54,17 @@ func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*ent
 		Username: input.Name,
 		Email:    input.Email,
 		Password: hsPwd,
+		Role: input.RoleName,
 		Active:   true,
 	}
 	if input.RoleName == "" {
 		input.RoleName = "user"
-	}
-	roleFilter := sqrl.Select("id").From("role").Where(sqrl.Eq{"role_name": input.RoleName})
-	var idRole int
-	err = u.DB.QueryRowContext(ctx, &idRole, roleFilter)
-	if err != nil {
-		return nil, err
-	}
-	if idRole == 0 {
-		return nil, &model.MyError{Message: "Ivalid role"}
 	}
 	err = newUsers.Insert(ctx, u.DB)
 	// if there is an error opening the connection, handle it
 	if err != nil {
 		return nil, err
 	}
-	roleUser := entities.UserRole{
-		FkUser: newUsers.ID,
-		FkRole: idRole,
-	}
-	roleUser.Insert(ctx, u.DB)
-
 	return &newUsers, nil
 }
 
@@ -87,9 +73,7 @@ func (u *UserService) Me(ctx context.Context) (*model.UserDto, error) {
 	if errParse != nil {
 		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
 	}
-	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, r.role_name as rolename").From("user u")
-	userRoleFilter.Join("user_role ur on ur.fk_user = u.id and u.active = true")
-	userRoleFilter.Join("role r on r.id = ur.fk_role")
+	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, u.role as rolename").From("user u")
 	userRoleFilter.Where(sqrl.Eq{"u.id": claims.ID})
 	var findUsers []model.UserRoleDto
 	err := u.DB.QueryContext(ctx, &findUsers, userRoleFilter)
@@ -127,9 +111,7 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 	if len(password) == 0 || len(email) == 0 || !u.validEmail(email) {
 		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
-	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, r.role_name as rolename").From("user u")
-	userRoleFilter.Join("user_role ur on ur.fk_user = u.id and u.active = true")
-	userRoleFilter.Join("role r on r.id = ur.fk_role")
+	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, u.role as rolename").From("user u")
 	userRoleFilter.Where(sqrl.Eq{"u.email": email})
 	var findUsers []model.UserRoleDto
 	err := u.DB.QueryContext(ctx, &findUsers, userRoleFilter)

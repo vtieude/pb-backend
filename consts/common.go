@@ -15,6 +15,9 @@ const ERR_DUPLICATE_PRODUCT_KEY = "Mã sản phẩm đã tồn tại"
 const ERR_USER_GET_INFORMATION = "Thông tin tài khoản đăng nhập không chính xác"
 const USER_CTX_KEY = "user_context"
 const TOKEN_CTX_KEY = "token"
+const ROLE_USER_ADMIN = "admin"
+const ROLE_USER_SUPER_ADMIN = "super_admin"
+const ROLE_STAFF_USER = "staff"
 
 type authString string
 

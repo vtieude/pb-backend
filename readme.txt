@@ -31,3 +31,6 @@ go run github.com/99designs/gqlgen
 wire ./wiregen
 // Loader avoid n+1
 go run github.com/vektah/dataloaden UserLoader int *../entities.User
+
+#For Mac with xo schema issue
+unsetopt nomatch
