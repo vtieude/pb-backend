@@ -70,7 +70,7 @@ func (c *Customer) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO .customer (` +
+	const sqlstr = `INSERT INTO customer (` +
 		`customer_name, phone, address, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?` +
@@ -101,7 +101,7 @@ func (c *Customer) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE .customer SET ` +
+	const sqlstr = `UPDATE customer SET ` +
 		`customer_name = ?, phone = ?, address = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
@@ -127,7 +127,7 @@ func (c *Customer) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO .customer (` +
+	const sqlstr = `INSERT INTO customer (` +
 		`id, customer_name, phone, address, active` +
 		`) VALUES (` +
 		`?, ?, ?, ?, ?` +
@@ -153,7 +153,7 @@ func (c *Customer) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM .customer ` +
+	const sqlstr = `DELETE FROM customer ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, c.ID)
@@ -165,14 +165,14 @@ func (c *Customer) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// CustomerByID retrieves a row from '.customer' as a Customer.
+// CustomerByID retrieves a row from 'customer' as a Customer.
 //
 // Generated from index 'customer_id_pkey'.
 func CustomerByID(ctx context.Context, db DB, id int) (*Customer, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`id, customer_name, phone, address, active ` +
-		`FROM .customer ` +
+		`FROM customer ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

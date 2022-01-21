@@ -10,25 +10,27 @@ import (
 
 // User represents a row from 'user'.
 type User struct {
-	ID        int    `json:"ID" db:"id"`                // id
-	Username  string `json:"Username" db:"username"`    // username
-	Password  string `json:"Password" db:"password"`    // password
-	Email     string `json:"Email" db:"email"`          // email
-	RoleLabel string `json:"RoleLabel" db:"role_label"` // role_label
-	Role      string `json:"Role" db:"role"`            // role
-	Active    bool   `json:"Active" db:"active"`        // active
+	ID         int    `json:"ID" db:"id"`                 // id
+	Username   string `json:"Username" db:"username"`     // username
+	Password   string `json:"Password" db:"password"`     // password
+	Email      string `json:"Email" db:"email"`           // email
+	RoleLabel  string `json:"RoleLabel" db:"role_label"`  // role_label
+	Permission int    `json:"Permission" db:"permission"` // permission
+	Role       string `json:"Role" db:"role"`             // role
+	Active     bool   `json:"Active" db:"active"`         // active
 	// xo fields
 	_exists, _deleted bool
 }
 
 type FilterUser struct {
-	ID        *int    // id
-	Username  *string // username
-	Password  *string // password
-	Email     *string // email
-	RoleLabel *string // role_label
-	Role      *string // role
-	Active    *bool   // active
+	ID         *int    // id
+	Username   *string // username
+	Password   *string // password
+	Email      *string // email
+	RoleLabel  *string // role_label
+	Permission *int    // permission
+	Role       *string // role
+	Active     *bool   // active
 
 }
 
@@ -48,6 +50,9 @@ func (u *User) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterUse
 	}
 	if filter.RoleLabel != nil {
 		sqrlBuilder.Where(sqrl.Eq{"role_label": filter.RoleLabel})
+	}
+	if filter.Permission != nil {
+		sqrlBuilder.Where(sqrl.Eq{"permission": filter.Permission})
 	}
 	if filter.Role != nil {
 		sqrlBuilder.Where(sqrl.Eq{"role": filter.Role})
@@ -79,14 +84,14 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO .user (` +
-		`username, password, email, role_label, role, active` +
+	const sqlstr = `INSERT INTO user (` +
+		`username, password, email, role_label, permission, role, active` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active)
-	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active)
+	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active)
+	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active)
 	if err != nil {
 		return logerror(err)
 	}
@@ -110,12 +115,12 @@ func (u *User) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE .user SET ` +
-		`username = ?, password = ?, email = ?, role_label = ?, role = ?, active = ? ` +
+	const sqlstr = `UPDATE user SET ` +
+		`username = ?, password = ?, email = ?, role_label = ?, permission = ?, role = ?, active = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active, u.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active, u.ID); err != nil {
+	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -136,16 +141,16 @@ func (u *User) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO .user (` +
-		`id, username, password, email, role_label, role, active` +
+	const sqlstr = `INSERT INTO user (` +
+		`id, username, password, email, role_label, permission, role, active` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`username = VALUES(username), password = VALUES(password), email = VALUES(email), role_label = VALUES(role_label), role = VALUES(role), active = VALUES(active)`
+		`username = VALUES(username), password = VALUES(password), email = VALUES(email), role_label = VALUES(role_label), permission = VALUES(permission), role = VALUES(role), active = VALUES(active)`
 	// run
-	logf(sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Role, u.Active); err != nil {
+	logf(sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active)
+	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -162,7 +167,7 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM .user ` +
+	const sqlstr = `DELETE FROM user ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, u.ID)
@@ -174,14 +179,14 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// UserByEmail retrieves a row from '.user' as a User.
+// UserByEmail retrieves a row from 'user' as a User.
 //
 // Generated from index 'email'.
 func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, username, password, email, role_label, role, active ` +
-		`FROM .user ` +
+		`id, username, password, email, role_label, permission, role, active ` +
+		`FROM user ` +
 		`WHERE email = ?`
 	// run
 	logf(sqlstr, email)
@@ -195,14 +200,14 @@ func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	return &u, nil
 }
 
-// UserByID retrieves a row from '.user' as a User.
+// UserByID retrieves a row from 'user' as a User.
 //
 // Generated from index 'user_id_pkey'.
 func UserByID(ctx context.Context, db DB, id int) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, username, password, email, role_label, role, active ` +
-		`FROM .user ` +
+		`id, username, password, email, role_label, permission, role, active ` +
+		`FROM user ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

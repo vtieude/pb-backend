@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-type Friend struct {
-	City *string `json:"City"`
-}
-
 type NewProduct struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`

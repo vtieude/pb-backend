@@ -54,7 +54,7 @@ func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*ent
 		Username: input.Name,
 		Email:    input.Email,
 		Password: hsPwd,
-		Role: input.RoleName,
+		Role:     input.RoleName,
 		Active:   true,
 	}
 	if input.RoleName == "" {
@@ -92,13 +92,24 @@ func (u *UserService) Me(ctx context.Context) (*model.UserDto, error) {
 }
 
 func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error) {
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
+	}
+	currentUse, err := entities.UserByID(ctx, u.DB, claims.ID)
+	if err != nil {
+		return nil, err
+	}
+	if currentUse == nil {
+		return nil, nil
+
+	}
 	var users []*entities.User
-	stss := sqrl.Select("username, id").From("user")
+	stss := sqrl.Select("id, username, email, role, role_label, active").From("user").Where(sqrl.GtOrEq{"permission": currentUse.Permission})
 	u.DB.AddPagination(stss, pagination)
-	err := u.DB.QueryContext(ctx, &users, stss)
+	err = u.DB.QueryContext(ctx, &users, stss)
 	// if there is an error opening the connection, handle it
 	if err != nil {
-		fmt.Print(err.Error())
 		return nil, err
 	}
 	return users, nil

@@ -48,10 +48,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Friend struct {
-		City func(childComplexity int) int
-	}
-
 	Mutation struct {
 		CreateNewProduct func(childComplexity int, input model.NewProduct) int
 		CreateUser       func(childComplexity int, input model.NewUser) int
@@ -80,7 +76,12 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		ID func(childComplexity int) int
+		Active    func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Role      func(childComplexity int) int
+		RoleLabel func(childComplexity int) int
+		Username  func(childComplexity int) int
 	}
 
 	UserDto struct {
@@ -117,13 +118,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Friend.City":
-		if e.complexity.Friend.City == nil {
-			break
-		}
-
-		return e.complexity.Friend.City(childComplexity), true
 
 	case "Mutation.createNewProduct":
 		if e.complexity.Mutation.CreateNewProduct == nil {
@@ -260,12 +254,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Me(childComplexity), true
 
+	case "User.Active":
+		if e.complexity.User.Active == nil {
+			break
+		}
+
+		return e.complexity.User.Active(childComplexity), true
+
+	case "User.Email":
+		if e.complexity.User.Email == nil {
+			break
+		}
+
+		return e.complexity.User.Email(childComplexity), true
+
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+
+	case "User.Role":
+		if e.complexity.User.Role == nil {
+			break
+		}
+
+		return e.complexity.User.Role(childComplexity), true
+
+	case "User.RoleLabel":
+		if e.complexity.User.RoleLabel == nil {
+			break
+		}
+
+		return e.complexity.User.RoleLabel(childComplexity), true
+
+	case "User.Username":
+		if e.complexity.User.Username == nil {
+			break
+		}
+
+		return e.complexity.User.Username(childComplexity), true
 
 	case "UserDto.id":
 		if e.complexity.UserDto.ID == nil {
@@ -382,8 +411,14 @@ directive @adminValidate on FIELD_DEFINITION
 "DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
 scalar Time
 
+# User
 type User {
   id: ID!
+  Username:  String!
+	Email:     String! 
+	RoleLabel: String! 
+	Role:      String! 
+	Active:    Boolean  
 }
 
 input NewUser {
@@ -392,32 +427,32 @@ input NewUser {
   password: String!
   roleName: String!
 }
-input NewProduct {
-  name: String!
-  key: String!
-}
-
-
-
-type Friend {
-  City: String
-}
-input Pagination {
-  PerPage: Int
-	Page:    Int
-	Sort:    [String!]
-}
-
-input OverviewUserSaleFilter {
-  UserName: String
-  DateTime: Time
-}
 
 type UserDto {
   id: Int!
   token: String!
   role: String!
   userName: String!
+}
+
+
+# Product
+input NewProduct {
+  name: String!
+  key: String!
+}
+
+
+type ProductDto {
+  id: Int!
+  Name: String
+	ProductKey: String!
+}
+
+# Sale
+input OverviewUserSaleFilter {
+  UserName: String
+  DateTime: Time
 }
 
 type OverviewUserSaleDto {
@@ -428,10 +463,11 @@ type OverviewUserSaleDto {
   EarningMoney: Float!
 }
 
-type ProductDto {
-  id: Int!
-  Name: String
-	ProductKey: String!
+# Helper
+input Pagination {
+  PerPage: Int
+	Page:    Int
+	Sort:    [String!]
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -600,38 +636,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Friend_City(ctx context.Context, field graphql.CollectedField, obj *model.Friend) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Friend",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.City, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
 
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -1418,6 +1422,178 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_Username(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_Email(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_RoleLabel(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RoleLabel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_Role(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_Active(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserDto_id(ctx context.Context, field graphql.CollectedField, obj *model.UserDto) (ret graphql.Marshaler) {
@@ -2838,34 +3014,6 @@ func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj in
 
 // region    **************************** object.gotpl ****************************
 
-var friendImplementors = []string{"Friend"}
-
-func (ec *executionContext) _Friend(ctx context.Context, sel ast.SelectionSet, obj *model.Friend) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, friendImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Friend")
-		case "City":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Friend_City(ctx, field, obj)
-			}
-
-			out.Values[i] = innerFunc(ctx)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3198,6 +3346,53 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "Username":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_Username(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Email":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_Email(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "RoleLabel":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_RoleLabel(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Role":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_Role(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Active":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._User_Active(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
