@@ -11,7 +11,7 @@ scalar Time
 
 # User
 type User {
-  id: ID!
+  id: Int!
   Username:  String!
 	Email:     String! 
 	RoleLabel: String! 
