@@ -105,7 +105,7 @@ func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Paginat
 
 	}
 	var users []*entities.User
-	stss := sqrl.Select("id, username, email, role, role_label, active").From("user").Where(sqrl.GtOrEq{"permission": currentUse.Permission})
+	stss := sqrl.Select("id, username, email, role, role_label, active").From("user").Where(sqrl.LtOrEq{"permission": currentUse.Permission})
 	u.DB.AddPagination(stss, pagination)
 	err = u.DB.QueryContext(ctx, &users, stss)
 	// if there is an error opening the connection, handle it
