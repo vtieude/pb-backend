@@ -12,10 +12,11 @@ type NewProduct struct {
 }
 
 type NewUser struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	RoleName string `json:"roleName"`
+	UserName    string  `json:"userName"`
+	Email       string  `json:"email"`
+	Password    string  `json:"password"`
+	RoleName    string  `json:"roleName"`
+	PhoneNumber *string `json:"phoneNumber"`
 }
 
 type OverviewUserSaleFilter struct {

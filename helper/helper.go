@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -24,4 +25,42 @@ func ConvertToNullPointDateTime(date *string) *time.Time {
 		return nil
 	}
 	return &t
+}
+func ConvertToNullPointSqlString(data *string) sql.NullString {
+	if data == nil {
+		return sql.NullString{String: *data, Valid: false}
+	}
+	return sql.NullString{String: *data, Valid: true}
+}
+
+func GetRoleLabelByRole(roleName string) string {
+	fullRolePermision := map[string]string{
+		"admin":       "Quản lí",
+		"super_admin": "Super Admin",
+		"staff":       "Nhân Viên",
+		"user":        "Người dùng",
+	}
+	if roleName == "" {
+		return ""
+	}
+	if role, ok := fullRolePermision[roleName]; ok {
+		return role
+	}
+	return ""
+}
+
+func GetPermissionByRole(roleName string) int {
+	fullRolePermision := map[string]int{
+		"admin":       7,
+		"super_admin": 7,
+		"staff":       3,
+		"user":        1,
+	}
+	if roleName == "" {
+		return 0
+	}
+	if role, ok := fullRolePermision[roleName]; ok {
+		return role
+	}
+	return 0
 }

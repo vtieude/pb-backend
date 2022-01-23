@@ -7,6 +7,7 @@ import (
 	"pb-backend/consts"
 	"pb-backend/entities"
 	"pb-backend/graph/model"
+	"pb-backend/helper"
 	"strings"
 	"time"
 
@@ -33,11 +34,11 @@ type UserService struct {
 var NewUserService = wire.NewSet(wire.Struct(new(UserService), "*"), wire.Bind(new(IUserService), new(*UserService)))
 
 func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error) {
-
 	if !u.validEmail(input.Email) || len(strings.TrimSpace(input.Password)) < 6 {
 		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
-	stss := sqrl.Select("count(*)").From("user").Where(sqrl.Eq{"email": input.Email})
+	email := strings.TrimSpace(input.Email)
+	stss := sqrl.Select("count(*)").From("user").Where(sqrl.Eq{"email": email})
 	var existUsers int
 	err := u.DB.QueryRowContext(ctx, &existUsers, stss)
 	if err != nil {
@@ -50,15 +51,19 @@ func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*ent
 	if err != nil {
 		return nil, err
 	}
-	newUsers := entities.User{
-		Username: input.Name,
-		Email:    input.Email,
-		Password: hsPwd,
-		Role:     input.RoleName,
-		Active:   true,
-	}
 	if input.RoleName == "" {
 		input.RoleName = "user"
+	}
+
+	newUsers := entities.User{
+		Username:    input.UserName,
+		Email:       input.Email,
+		Password:    hsPwd,
+		Role:        input.RoleName,
+		RoleLabel:   helper.GetRoleLabelByRole(input.RoleName),
+		Permission:  helper.GetPermissionByRole(input.RoleName),
+		PhoneNumber: helper.ConvertToNullPointSqlString(input.PhoneNumber),
+		Active:      true,
 	}
 	err = newUsers.Insert(ctx, u.DB)
 	// if there is an error opening the connection, handle it
