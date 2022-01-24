@@ -16,6 +16,7 @@ type User {
 	Email:     String! 
 	RoleLabel: String! 
 	Role:      String! 
+  PhoneNumber: String
 	Active:    Boolean  
 }
 

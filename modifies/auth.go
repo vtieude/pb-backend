@@ -67,14 +67,17 @@ func (e *MyCustomHttpHandler) Authorization(ctx context.Context) (entities.MyCus
 	if errParse != nil || customClaim.ID == 0 {
 		return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
-	currentUser, err := entities.UserByID(ctx, e.DB, customClaim.ID)
+	userFilter := sqrl.Select("count(*)").From("user u").
+		Where(sqrl.Eq{"u.id": customClaim.ID}).Where(sqrl.Eq{"u.email": customClaim.Email})
+	var roleCount = 0
+	err := e.DB.QueryRowContext(ctx, &roleCount, userFilter)
 	if err != nil {
 		return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
-	if currentUser.Username == currentUser.Username {
-		return *customClaim, nil
+	if roleCount == 0 {
+		return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
 	}
-	return *customClaim, &model.MyError{Message: consts.ERR_USER_UN_AUTHORIZATION}
+	return *customClaim, nil
 }
 
 // // I return nil for the sake of example.

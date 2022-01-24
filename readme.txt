@@ -28,6 +28,8 @@ go get -u github.com/xo/xo
 # mysqldump -u root -p app_db > test.sql
 xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version -e *.created_at -e *.updated_at --src templates/
 go run github.com/99designs/gqlgen
+
+go install github.com/google/wire/cmd/wire@latest
 wire ./wiregen
 // Loader avoid n+1
 go run github.com/vektah/dataloaden UserLoader int *../entities.User

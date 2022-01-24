@@ -40,6 +40,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -78,12 +79,13 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Active    func(childComplexity int) int
-		Email     func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Role      func(childComplexity int) int
-		RoleLabel func(childComplexity int) int
-		Username  func(childComplexity int) int
+		Active      func(childComplexity int) int
+		Email       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		PhoneNumber func(childComplexity int) int
+		Role        func(childComplexity int) int
+		RoleLabel   func(childComplexity int) int
+		Username    func(childComplexity int) int
 	}
 
 	UserDto struct {
@@ -106,6 +108,9 @@ type QueryResolver interface {
 	GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, page *model.Pagination) ([]*model.OverviewUserSaleDto, error)
 	GetAllProducts(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
 	Me(ctx context.Context) (*model.UserDto, error)
+}
+type UserResolver interface {
+	PhoneNumber(ctx context.Context, obj *entities.User) (*string, error)
 }
 
 type executableSchema struct {
@@ -303,6 +308,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
+	case "User.PhoneNumber":
+		if e.complexity.User.PhoneNumber == nil {
+			break
+		}
+
+		return e.complexity.User.PhoneNumber(childComplexity), true
+
 	case "User.Role":
 		if e.complexity.User.Role == nil {
 			break
@@ -448,6 +460,7 @@ type User {
 	Email:     String! 
 	RoleLabel: String! 
 	Role:      String! 
+  PhoneNumber: String
 	Active:    Boolean  
 }
 
@@ -1754,6 +1767,38 @@ func (ec *executionContext) _User_Role(ctx context.Context, field graphql.Collec
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_PhoneNumber(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().PhoneNumber(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_Active(ctx context.Context, field graphql.CollectedField, obj *entities.User) (ret graphql.Marshaler) {
@@ -3611,7 +3656,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "Username":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3621,7 +3666,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "Email":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3631,7 +3676,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "RoleLabel":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3641,7 +3686,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "Role":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3651,8 +3696,25 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = innerFunc(ctx)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "PhoneNumber":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_PhoneNumber(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "Active":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._User_Active(ctx, field, obj)

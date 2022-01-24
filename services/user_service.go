@@ -76,6 +76,7 @@ func (u *UserService) EditUser(ctx context.Context, input model.EditUserModel) (
 	editUser.Username = input.UserName
 	editUser.PhoneNumber = helper.ConvertToNullPointSqlString(input.PhoneNumber)
 	editUser.Role = input.RoleName
+	editUser.RoleLabel = helper.GetRoleLabelByRole(input.RoleName)
 	editUser.Permission = helper.GetPermissionByRole(input.RoleName)
 
 	err = editUser.Update(ctx, u.DB)
@@ -163,7 +164,7 @@ func (u *UserService) GetAllUsers(ctx context.Context, pagination *model.Paginat
 
 	}
 	var users []*entities.User
-	stss := sqrl.Select("id, username, email, role, role_label, active").From("user").Where(sqrl.LtOrEq{"permission": currentUse.Permission})
+	stss := sqrl.Select("id, username, email, role, role_label, active, phone_number").From("user").Where(sqrl.LtOrEq{"permission": currentUse.Permission})
 	u.DB.AddPagination(stss, pagination)
 	err = u.DB.QueryContext(ctx, &users, stss)
 	// if there is an error opening the connection, handle it
@@ -235,8 +236,8 @@ func (u *UserService) checkPasswordHash(password, hash string) bool {
 // ParseToken parses a jwt token and returns the username in it's claims
 func (u *UserService) GenerateToken(userLogin model.UserRoleDto) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, entities.MyCustomClaims{
-		Username: userLogin.UserName,
-		ID:       userLogin.ID,
+		Email: userLogin.Email,
+		ID:    userLogin.ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().AddDate(0, 3, 0).Unix(),
 			// ExpiresAt: time.Now().Add(time.Second * 10).Unix(),

@@ -12,6 +12,7 @@ import (
 	"log"
 	"pb-backend/entities"
 	"pb-backend/graph"
+	"pb-backend/graph/resolvers"
 	"pb-backend/modifies"
 	"pb-backend/services"
 )
@@ -29,10 +30,12 @@ func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
 	saleService := &services.SaleService{
 		DB: dbConnection,
 	}
+	userResolver := &resolvers.UserResolver{}
 	resolver := &graph.Resolver{
 		IUserService:    userService,
 		IProductService: productService,
 		ISaleService:    saleService,
+		UserResolver:    userResolver,
 	}
 	myCustomHttpHandler := &modifies.MyCustomHttpHandler{
 		DB: dbConnection,
