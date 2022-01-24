@@ -1,5 +1,7 @@
 type Mutation {
   createUser(input: NewUser!): User! @adminValidate
+  deleteUser(userId: Int!): Boolean!  @adminValidate
+  editUser(input: EditUserModel!): User!  @auth
   login(email: String!, password: String!): UserDto!
   createNewProduct(input: NewProduct!): ProductDto!  @adminValidate
 }

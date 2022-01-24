@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type EditUserModel struct {
+	UserID      int     `json:"userId"`
+	UserName    string  `json:"userName"`
+	RoleName    string  `json:"roleName"`
+	PhoneNumber *string `json:"phoneNumber"`
+}
+
 type NewProduct struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`

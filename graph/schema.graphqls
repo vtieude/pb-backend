@@ -27,6 +27,13 @@ input NewUser {
   phoneNumber: String
 }
 
+input EditUserModel {
+  userId: Int!
+  userName: String!
+  roleName: String!
+  phoneNumber: String
+}
+
 type UserDto {
   id: Int!
   token: String!
