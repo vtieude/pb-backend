@@ -69,7 +69,6 @@ func (u *UserService) EditUser(ctx context.Context, input model.EditUserModel) (
 		}
 	}
 
-	u.validUserPermissionAction(ctx, editUser.Permission)
 	if input.RoleName == "" {
 		input.RoleName = "user"
 	}

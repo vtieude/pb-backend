@@ -28,7 +28,7 @@ func ConvertToNullPointDateTime(date *string) *time.Time {
 }
 func ConvertToNullPointSqlString(data *string) sql.NullString {
 	if data == nil {
-		return sql.NullString{String: *data, Valid: false}
+		return sql.NullString{}
 	}
 	return sql.NullString{String: *data, Valid: true}
 }
