@@ -181,7 +181,7 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
 	}
 	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, u.role as rolename").From("user u")
-	userRoleFilter.Where(sqrl.Eq{"u.id": 1})
+	userRoleFilter.Where(sqrl.Eq{"u.email": email})
 	var userLogin model.UserRoleDto
 	fmt.Println("query")
 	err := u.DB.QueryRowContext(ctx, &userLogin, userRoleFilter)
