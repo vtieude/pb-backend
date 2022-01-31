@@ -21,6 +21,8 @@ type Sale struct {
 	SaleStatus NullSaleStatus `json:"SaleStatus" db:"sale_status"` // sale_status
 	SaledDate  time.Time      `json:"SaledDate" db:"saled_date"`   // saled_date
 	Active     bool           `json:"Active" db:"active"`          // active
+	UpdatedAt  time.Time      `json:"UpdatedAt" db:"updated_at"`   // updated_at
+	CreatedAt  time.Time      `json:"CreatedAt" db:"created_at"`   // created_at
 	// xo fields
 	_exists, _deleted bool
 }
@@ -35,6 +37,8 @@ type FilterSale struct {
 	SaleStatus *NullSaleStatus // sale_status
 	SaledDate  *time.Time      // saled_date
 	Active     *bool           // active
+	UpdatedAt  *time.Time      // updated_at
+	CreatedAt  *time.Time      // created_at
 
 }
 
@@ -67,6 +71,12 @@ func (s *Sale) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterSal
 	if filter.Active != nil {
 		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
 	}
+	if filter.UpdatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"updated_at": filter.UpdatedAt})
+	}
+	if filter.CreatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"created_at": filter.CreatedAt})
+	}
 
 	return true
 }
@@ -91,14 +101,14 @@ func (s *Sale) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO sale (` +
-		`fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active` +
+	const sqlstr = `INSERT INTO app_db.sale (` +
+		`fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active)
-	res, err := db.ExecContext(ctx, sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active)
+	logf(sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt)
+	res, err := db.ExecContext(ctx, sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt)
 	if err != nil {
 		return logerror(err)
 	}
@@ -122,12 +132,12 @@ func (s *Sale) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with primary key
-	const sqlstr = `UPDATE sale SET ` +
-		`fk_user = ?, fk_customer = ?, fk_product = ?, price = ?, note = ?, sale_status = ?, saled_date = ?, active = ? ` +
+	const sqlstr = `UPDATE app_db.sale SET ` +
+		`fk_user = ?, fk_customer = ?, fk_product = ?, price = ?, note = ?, sale_status = ?, saled_date = ?, active = ?, updated_at = ?, created_at = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.ID); err != nil {
+	logf(sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt, s.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt, s.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -148,16 +158,16 @@ func (s *Sale) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO sale (` +
-		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active` +
+	const sqlstr = `INSERT INTO app_db.sale (` +
+		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`fk_user = VALUES(fk_user), fk_customer = VALUES(fk_customer), fk_product = VALUES(fk_product), price = VALUES(price), note = VALUES(note), sale_status = VALUES(sale_status), saled_date = VALUES(saled_date), active = VALUES(active)`
+		`fk_user = VALUES(fk_user), fk_customer = VALUES(fk_customer), fk_product = VALUES(fk_product), price = VALUES(price), note = VALUES(note), sale_status = VALUES(sale_status), saled_date = VALUES(saled_date), active = VALUES(active), updated_at = VALUES(updated_at), created_at = VALUES(created_at)`
 	// run
-	logf(sqlstr, s.ID, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, s.ID, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active); err != nil {
+	logf(sqlstr, s.ID, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt)
+	if _, err := db.ExecContext(ctx, sqlstr, s.ID, s.FkUser, s.FkCustomer, s.FkProduct, s.Price, s.Note, s.SaleStatus, s.SaledDate, s.Active, s.UpdatedAt, s.CreatedAt); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -174,7 +184,7 @@ func (s *Sale) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM sale ` +
+	const sqlstr = `DELETE FROM app_db.sale ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, s.ID)
@@ -186,14 +196,14 @@ func (s *Sale) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// SaleByFkCustomer retrieves a row from 'sale' as a Sale.
+// SaleByFkCustomer retrieves a row from 'app_db.sale' as a Sale.
 //
 // Generated from index 'fk_customer'.
 func SaleByFkCustomer(ctx context.Context, db DB, fkCustomer sql.NullInt64) ([]*Sale, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active ` +
-		`FROM sale ` +
+		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at ` +
+		`FROM app_db.sale ` +
 		`WHERE fk_customer = ?`
 	// run
 	logf(sqlstr, fkCustomer)
@@ -206,14 +216,14 @@ func SaleByFkCustomer(ctx context.Context, db DB, fkCustomer sql.NullInt64) ([]*
 	return res, nil
 }
 
-// SaleByFkProduct retrieves a row from 'sale' as a Sale.
+// SaleByFkProduct retrieves a row from 'app_db.sale' as a Sale.
 //
 // Generated from index 'fk_product'.
 func SaleByFkProduct(ctx context.Context, db DB, fkProduct sql.NullInt64) ([]*Sale, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active ` +
-		`FROM sale ` +
+		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at ` +
+		`FROM app_db.sale ` +
 		`WHERE fk_product = ?`
 	// run
 	logf(sqlstr, fkProduct)
@@ -226,14 +236,14 @@ func SaleByFkProduct(ctx context.Context, db DB, fkProduct sql.NullInt64) ([]*Sa
 	return res, nil
 }
 
-// SaleByFkUser retrieves a row from 'sale' as a Sale.
+// SaleByFkUser retrieves a row from 'app_db.sale' as a Sale.
 //
 // Generated from index 'fk_user'.
 func SaleByFkUser(ctx context.Context, db DB, fkUser int) ([]*Sale, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active ` +
-		`FROM sale ` +
+		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at ` +
+		`FROM app_db.sale ` +
 		`WHERE fk_user = ?`
 	// run
 	logf(sqlstr, fkUser)
@@ -246,14 +256,14 @@ func SaleByFkUser(ctx context.Context, db DB, fkUser int) ([]*Sale, error) {
 	return res, nil
 }
 
-// SaleByID retrieves a row from 'sale' as a Sale.
+// SaleByID retrieves a row from 'app_db.sale' as a Sale.
 //
 // Generated from index 'sale_id_pkey'.
 func SaleByID(ctx context.Context, db DB, id int) (*Sale, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active ` +
-		`FROM sale ` +
+		`id, fk_user, fk_customer, fk_product, price, note, sale_status, saled_date, active, updated_at, created_at ` +
+		`FROM app_db.sale ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

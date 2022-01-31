@@ -52,8 +52,12 @@ input NewProduct {
 
 type ProductDto {
   id: Int!
-  Name: String
-	ProductKey: String!
+  name: String
+	productKey: String!
+  category: String
+  price: Float!
+  sellingPrice: Float!
+  number: Int!
 }
 
 # Sale

@@ -4,27 +4,39 @@ package entities
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/elgris/sqrl"
 )
 
 // Product represents a row from 'product'.
 type Product struct {
-	ID         int     `json:"ID" db:"id"`                  // id
-	Name       string  `json:"Name" db:"name"`              // name
-	ProductKey string  `json:"ProductKey" db:"product_key"` // product_key
-	Active     bool    `json:"Active" db:"active"`          // active
-	Price      float64 `json:"Price" db:"price"`            // price
+	ID           int            `json:"ID" db:"id"`                      // id
+	Name         string         `json:"Name" db:"name"`                  // name
+	ProductKey   string         `json:"ProductKey" db:"product_key"`     // product_key
+	UpdatedAt    time.Time      `json:"UpdatedAt" db:"updated_at"`       // updated_at
+	CreatedAt    time.Time      `json:"CreatedAt" db:"created_at"`       // created_at
+	Active       bool           `json:"Active" db:"active"`              // active
+	Price        float64        `json:"Price" db:"price"`                // price
+	Category     sql.NullString `json:"Category" db:"category"`          // category
+	SellingPrice float64        `json:"SellingPrice" db:"selling_price"` // selling_price
+	Quantity     int            `json:"Quantity" db:"quantity"`          // quantity
 	// xo fields
 	_exists, _deleted bool
 }
 
 type FilterProduct struct {
-	ID         *int     // id
-	Name       *string  // name
-	ProductKey *string  // product_key
-	Active     *bool    // active
-	Price      *float64 // price
+	ID           *int            // id
+	Name         *string         // name
+	ProductKey   *string         // product_key
+	UpdatedAt    *time.Time      // updated_at
+	CreatedAt    *time.Time      // created_at
+	Active       *bool           // active
+	Price        *float64        // price
+	Category     *sql.NullString // category
+	SellingPrice *float64        // selling_price
+	Quantity     *int            // quantity
 
 }
 
@@ -39,11 +51,26 @@ func (p *Product) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter Filter
 	if filter.ProductKey != nil {
 		sqrlBuilder.Where(sqrl.Eq{"product_key": filter.ProductKey})
 	}
+	if filter.UpdatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"updated_at": filter.UpdatedAt})
+	}
+	if filter.CreatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"created_at": filter.CreatedAt})
+	}
 	if filter.Active != nil {
 		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
 	}
 	if filter.Price != nil {
 		sqrlBuilder.Where(sqrl.Eq{"price": filter.Price})
+	}
+	if filter.Category != nil {
+		sqrlBuilder.Where(sqrl.Eq{"category": filter.Category})
+	}
+	if filter.SellingPrice != nil {
+		sqrlBuilder.Where(sqrl.Eq{"selling_price": filter.SellingPrice})
+	}
+	if filter.Quantity != nil {
+		sqrlBuilder.Where(sqrl.Eq{"quantity": filter.Quantity})
 	}
 
 	return true
@@ -70,13 +97,13 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product (` +
-		`name, product_key, active, price` +
+		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.Price)
-	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.Price)
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity)
+	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity)
 	if err != nil {
 		return logerror(err)
 	}
@@ -101,11 +128,11 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	}
 	// update with primary key
 	const sqlstr = `UPDATE product SET ` +
-		`name = ?, product_key = ?, active = ?, price = ? ` +
+		`name = ?, product_key = ?, updated_at = ?, created_at = ?, active = ?, price = ?, category = ?, selling_price = ?, quantity = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.Price, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.Price, p.ID); err != nil {
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -127,15 +154,15 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO product (` +
-		`id, name, product_key, active, price` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`name = VALUES(name), product_key = VALUES(product_key), active = VALUES(active), price = VALUES(price)`
+		`name = VALUES(name), product_key = VALUES(product_key), updated_at = VALUES(updated_at), created_at = VALUES(created_at), active = VALUES(active), price = VALUES(price), category = VALUES(category), selling_price = VALUES(selling_price), quantity = VALUES(quantity)`
 	// run
-	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.Active, p.Price)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.Active, p.Price); err != nil {
+	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity)
+	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -170,7 +197,7 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active, price ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity ` +
 		`FROM product ` +
 		`WHERE id = ?`
 	// run
@@ -191,7 +218,7 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active, price ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity ` +
 		`FROM product ` +
 		`WHERE product_key = ?`
 	// run

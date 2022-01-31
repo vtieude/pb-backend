@@ -1,6 +1,7 @@
 type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
   GetOverviewUsersSales(fitler: OverviewUserSaleFilter,page: Pagination): [OverviewUserSaleDto!]! @auth
-  GetAllProducts(page: Pagination): [ProductDto!]! @auth
+  GetAllProductsForStaff(page: Pagination): [ProductDto!]! @auth
+  GetAllProductsForAdmin(page: Pagination): [ProductDto!]! @adminValidate
   Me: UserDto! @auth
 }

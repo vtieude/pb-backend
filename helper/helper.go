@@ -33,6 +33,13 @@ func ConvertToNullPointSqlString(data *string) sql.NullString {
 	return sql.NullString{String: *data, Valid: true}
 }
 
+func ConvertToString(data *sql.NullString) string {
+	if data == nil || data.Valid {
+		return ""
+	}
+	return data.String
+}
+
 func GetRoleLabelByRole(roleName string) string {
 	fullRolePermision := map[string]string{
 		"admin":       "Quản lí",

@@ -38,9 +38,13 @@ type Pagination struct {
 }
 
 type ProductDto struct {
-	ID         int     `json:"id"`
-	Name       *string `json:"Name"`
-	ProductKey string  `json:"ProductKey"`
+	ID           int     `json:"id"`
+	Name         *string `json:"name"`
+	ProductKey   string  `json:"productKey"`
+	Category     *string `json:"category"`
+	Price        float64 `json:"price"`
+	SellingPrice float64 `json:"sellingPrice"`
+	Number       int     `json:"number"`
 }
 
 type UserDto struct {

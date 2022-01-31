@@ -5,6 +5,7 @@ package entities
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/elgris/sqrl"
 )
@@ -16,6 +17,8 @@ type Customer struct {
 	Phone        sql.NullInt64   `json:"Phone" db:"phone"`                // phone
 	Address      sql.NullFloat64 `json:"Address" db:"address"`            // address
 	Active       bool            `json:"Active" db:"active"`              // active
+	UpdatedAt    time.Time       `json:"UpdatedAt" db:"updated_at"`       // updated_at
+	CreatedAt    time.Time       `json:"CreatedAt" db:"created_at"`       // created_at
 	// xo fields
 	_exists, _deleted bool
 }
@@ -26,6 +29,8 @@ type FilterCustomer struct {
 	Phone        *sql.NullInt64   // phone
 	Address      *sql.NullFloat64 // address
 	Active       *bool            // active
+	UpdatedAt    *time.Time       // updated_at
+	CreatedAt    *time.Time       // created_at
 
 }
 
@@ -45,6 +50,12 @@ func (c *Customer) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter Filte
 	}
 	if filter.Active != nil {
 		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+	if filter.UpdatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"updated_at": filter.UpdatedAt})
+	}
+	if filter.CreatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"created_at": filter.CreatedAt})
 	}
 
 	return true
@@ -71,13 +82,13 @@ func (c *Customer) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO customer (` +
-		`customer_name, phone, address, active` +
+		`customer_name, phone, address, active, updated_at, created_at` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, c.CustomerName, c.Phone, c.Address, c.Active)
-	res, err := db.ExecContext(ctx, sqlstr, c.CustomerName, c.Phone, c.Address, c.Active)
+	logf(sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt)
+	res, err := db.ExecContext(ctx, sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt)
 	if err != nil {
 		return logerror(err)
 	}
@@ -102,11 +113,11 @@ func (c *Customer) Update(ctx context.Context, db DB) error {
 	}
 	// update with primary key
 	const sqlstr = `UPDATE customer SET ` +
-		`customer_name = ?, phone = ?, address = ?, active = ? ` +
+		`customer_name = ?, phone = ?, address = ?, active = ?, updated_at = ?, created_at = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.ID); err != nil {
+	logf(sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt, c.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt, c.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -128,15 +139,15 @@ func (c *Customer) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO customer (` +
-		`id, customer_name, phone, address, active` +
+		`id, customer_name, phone, address, active, updated_at, created_at` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`customer_name = VALUES(customer_name), phone = VALUES(phone), address = VALUES(address), active = VALUES(active)`
+		`customer_name = VALUES(customer_name), phone = VALUES(phone), address = VALUES(address), active = VALUES(active), updated_at = VALUES(updated_at), created_at = VALUES(created_at)`
 	// run
-	logf(sqlstr, c.ID, c.CustomerName, c.Phone, c.Address, c.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, c.ID, c.CustomerName, c.Phone, c.Address, c.Active); err != nil {
+	logf(sqlstr, c.ID, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt)
+	if _, err := db.ExecContext(ctx, sqlstr, c.ID, c.CustomerName, c.Phone, c.Address, c.Active, c.UpdatedAt, c.CreatedAt); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -171,7 +182,7 @@ func (c *Customer) Delete(ctx context.Context, db DB) error {
 func CustomerByID(ctx context.Context, db DB, id int) (*Customer, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, customer_name, phone, address, active ` +
+		`id, customer_name, phone, address, active, updated_at, created_at ` +
 		`FROM customer ` +
 		`WHERE id = ?`
 	// run
