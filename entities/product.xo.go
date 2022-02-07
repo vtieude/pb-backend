@@ -95,6 +95,8 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	case p._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	p.UpdatedAt = time.Now()
+	p.CreatedAt = time.Now()
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product (` +
 		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity` +
@@ -126,6 +128,7 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	case p._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	p.UpdatedAt = time.Now()
 	// update with primary key
 	const sqlstr = `UPDATE product SET ` +
 		`name = ?, product_key = ?, updated_at = ?, created_at = ?, active = ?, price = ?, category = ?, selling_price = ?, quantity = ? ` +

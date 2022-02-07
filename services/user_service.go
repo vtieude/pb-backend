@@ -8,6 +8,7 @@ import (
 	"pb-backend/entities"
 	"pb-backend/graph/model"
 	"pb-backend/helper"
+	"regexp"
 	"strings"
 	"time"
 
@@ -87,8 +88,11 @@ func (u *UserService) EditUser(ctx context.Context, input model.EditUserModel) (
 }
 
 func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error) {
-	if !u.validEmail(input.Email) || len(strings.TrimSpace(input.Password)) < 6 {
-		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
+	if !u.validEmail(input.Email) {
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL}
+	}
+	if len(strings.TrimSpace(input.Password)) < 6 {
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_PASSWORD}
 	}
 	email := strings.TrimSpace(input.Email)
 	stss := sqrl.Select("count(*)").From("user").Where(sqrl.Eq{"email": email})
@@ -178,7 +182,7 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 	password = strings.TrimSpace(password)
 	email = strings.TrimSpace(email)
 	if len(password) == 0 || len(email) == 0 || !u.validEmail(email) {
-		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL_PASSWORD}
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_EMAIL}
 	}
 	userRoleFilter := sqrl.Select("u.id, u.email, u.password, u.username, u.role as rolename").From("user u")
 	userRoleFilter.Where(sqrl.Eq{"u.email": email})
@@ -201,6 +205,11 @@ func (u *UserService) Login(ctx context.Context, email string, password string) 
 }
 
 func (u *UserService) validEmail(email string) bool {
+	pattern := regexp.MustCompile("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$")
+	matches := pattern.MatchString(email)
+	if !matches {
+		return false
+	}
 	_, err := mail.ParseAddress(email)
 	return err == nil
 }

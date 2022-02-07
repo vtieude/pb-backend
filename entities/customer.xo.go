@@ -80,6 +80,8 @@ func (c *Customer) Insert(ctx context.Context, db DB) error {
 	case c._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	c.UpdatedAt = time.Now()
+	c.CreatedAt = time.Now()
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO customer (` +
 		`customer_name, phone, address, active, updated_at, created_at` +
@@ -111,6 +113,7 @@ func (c *Customer) Update(ctx context.Context, db DB) error {
 	case c._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	c.UpdatedAt = time.Now()
 	// update with primary key
 	const sqlstr = `UPDATE customer SET ` +
 		`customer_name = ?, phone = ?, address = ?, active = ?, updated_at = ?, created_at = ? ` +

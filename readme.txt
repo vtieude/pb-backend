@@ -26,6 +26,7 @@ go get -u github.com/xo/xo
 # docker build --tag docker-base-project .
 # docker run -d -p 3000:8080 --name go-server docker-base-project
 # mysqldump -u root -p app_db > test.sql
+xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version  --src templates/
 xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version -e *.created_at -e *.updated_at --src templates/
 go run github.com/99designs/gqlgen
 

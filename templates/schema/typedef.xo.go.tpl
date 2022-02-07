@@ -52,6 +52,8 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	case {{ short $t }}._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	{{ short $t }}.UpdatedAt = time.Now()
+	{{ short $t }}.CreatedAt = time.Now()
 {{ if $t.Manual -}}
 	// insert (manual)
 	{{ sqlstr "insert_manual" $t }}
@@ -130,6 +132,7 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	case {{ short $t }}._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	{{ short $t }}.UpdatedAt = time.Now()
 	// update with {{ if driver "postgres" }}composite {{ end }}primary key
 	{{ sqlstr "update" $t }}
 	// run

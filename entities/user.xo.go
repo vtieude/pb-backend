@@ -100,6 +100,8 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 	case u._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	u.UpdatedAt = time.Now()
+	u.CreatedAt = time.Now()
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO user (` +
 		`username, password, email, role_label, permission, role, active, updated_at, created_at, phone_number` +
@@ -131,6 +133,7 @@ func (u *User) Update(ctx context.Context, db DB) error {
 	case u._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	u.UpdatedAt = time.Now()
 	// update with primary key
 	const sqlstr = `UPDATE user SET ` +
 		`username = ?, password = ?, email = ?, role_label = ?, permission = ?, role = ?, active = ?, updated_at = ?, created_at = ?, phone_number = ? ` +

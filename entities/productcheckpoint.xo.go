@@ -80,6 +80,8 @@ func (pcp *ProductCheckPoint) Insert(ctx context.Context, db DB) error {
 	case pcp._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	pcp.UpdatedAt = time.Now()
+	pcp.CreatedAt = time.Now()
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product_check_point (` +
 		`fk_product, fk_sale, type, updated_at, created_at, active` +
@@ -111,6 +113,7 @@ func (pcp *ProductCheckPoint) Update(ctx context.Context, db DB) error {
 	case pcp._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	pcp.UpdatedAt = time.Now()
 	// update with primary key
 	const sqlstr = `UPDATE product_check_point SET ` +
 		`fk_product = ?, fk_sale = ?, type = ?, updated_at = ?, created_at = ?, active = ? ` +
