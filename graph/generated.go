@@ -524,6 +524,7 @@ input EditUserModel {
   userName: String!
   roleName: String!
   phoneNumber: String
+  password: String
 }
 
 type UserDto {
@@ -3398,6 +3399,14 @@ func (ec *executionContext) unmarshalInputEditUserModel(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phoneNumber"))
 			it.PhoneNumber, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}

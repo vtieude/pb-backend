@@ -68,6 +68,13 @@ func (u *UserService) EditUser(ctx context.Context, input model.EditUserModel) (
 		if !u.validUserPermissionAction(ctx, editUser.Permission) {
 			return nil, &model.MyError{Message: consts.ERR_USER_INVALID_PERMISSION}
 		}
+		if input.Password != nil && *input.Password != "" {
+			hsPwd, err := u.hashPassword(*input.Password)
+			if err != nil {
+				return nil, err
+			}
+			editUser.Password = hsPwd
+		}
 	}
 
 	if input.RoleName == "" {
