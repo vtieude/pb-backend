@@ -25,8 +25,10 @@ type IUserService interface {
 	GetAllUsers(ctx context.Context, pagination *model.Pagination) ([]*entities.User, error)
 	CreateUser(ctx context.Context, input model.NewUser) (*entities.User, error)
 	EditUser(ctx context.Context, input model.EditUserModel) (*entities.User, error)
+	EditProfile(ctx context.Context, input model.EditUserModel) (*entities.User, error)
 	DeleteUser(ctx context.Context, userId int) (bool, error)
 	Login(ctx context.Context, email string, password string) (*model.UserDto, error)
+	GetProfile(ctx context.Context) (*entities.User, error)
 	Me(ctx context.Context) (*model.UserDto, error)
 }
 type UserService struct {
@@ -52,6 +54,38 @@ func (u *UserService) DeleteUser(ctx context.Context, userId int) (bool, error) 
 	}
 	err = editUser.Delete(ctx, u.DB)
 	return true, err
+}
+
+func (u *UserService) EditProfile(ctx context.Context, input model.EditUserModel) (*entities.User, error) {
+	editUser, err := entities.UserByID(ctx, u.DB, input.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if editUser == nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_NOT_EXIST}
+	}
+	claims, _ := consts.CtxClaimValue(ctx)
+	if claims.ID != input.UserID {
+		return nil, &model.MyError{Message: consts.ERR_USER_INVALID_PERMISSION}
+	}
+	if input.Password != nil && *input.Password != "" {
+		hsPwd, err := u.hashPassword(*input.Password)
+		if err != nil {
+			return nil, err
+		}
+		editUser.Password = hsPwd
+	}
+
+	if input.RoleName == "" {
+		input.RoleName = "user"
+	}
+	editUser.Username = input.UserName
+	editUser.PhoneNumber = helper.ConvertToNullPointSqlString(input.PhoneNumber)
+	err = editUser.Update(ctx, u.DB)
+	if err != nil {
+		return nil, err
+	}
+	return editUser, nil
 }
 
 func (u *UserService) EditUser(ctx context.Context, input model.EditUserModel) (*entities.User, error) {
@@ -135,6 +169,14 @@ func (u *UserService) CreateUser(ctx context.Context, input model.NewUser) (*ent
 		return nil, err
 	}
 	return &newUsers, nil
+}
+
+func (u *UserService) GetProfile(ctx context.Context) (*entities.User, error) {
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
+	}
+	return entities.UserByID(ctx, u.DB, claims.ID)
 }
 
 func (u *UserService) Me(ctx context.Context) (*model.UserDto, error) {

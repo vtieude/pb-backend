@@ -3,5 +3,6 @@ type Query {
   GetOverviewUsersSales(fitler: OverviewUserSaleFilter,page: Pagination): [OverviewUserSaleDto!]! @auth
   GetAllProductsForStaff(page: Pagination): [ProductDto!]! @auth
   GetAllProductsForAdmin(page: Pagination): [ProductDto!]! @adminValidate
+  GetProfile: User! @auth
   Me: UserDto! @auth
 }
