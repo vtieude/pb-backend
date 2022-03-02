@@ -33,6 +33,7 @@ input EditUserModel {
   userName: String!
   roleName: String!
   phoneNumber: String
+  password: String
 }
 
 type UserDto {

@@ -53,6 +53,7 @@ type ComplexityRoot struct {
 		CreateNewProduct func(childComplexity int, input model.NewProduct) int
 		CreateUser       func(childComplexity int, input model.NewUser) int
 		DeleteUser       func(childComplexity int, userID int) int
+		EditProfile      func(childComplexity int, input model.EditUserModel) int
 		EditUser         func(childComplexity int, input model.EditUserModel) int
 		Login            func(childComplexity int, email string, password string) int
 	}
@@ -81,6 +82,7 @@ type ComplexityRoot struct {
 		GetAllProducts        func(childComplexity int, page *model.Pagination) int
 		GetAllUsers           func(childComplexity int, page *model.Pagination) int
 		GetOverviewUsersSales func(childComplexity int, fitler *model.OverviewUserSaleFilter, page *model.Pagination) int
+		GetProfile            func(childComplexity int) int
 		Me                    func(childComplexity int) int
 	}
 
@@ -108,11 +110,13 @@ type MutationResolver interface {
 	EditUser(ctx context.Context, input model.EditUserModel) (*entities.User, error)
 	Login(ctx context.Context, email string, password string) (*model.UserDto, error)
 	CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error)
+	EditProfile(ctx context.Context, input model.EditUserModel) (*entities.User, error)
 }
 type QueryResolver interface {
 	GetAllUsers(ctx context.Context, page *model.Pagination) ([]*entities.User, error)
 	GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, page *model.Pagination) ([]*model.OverviewUserSaleDto, error)
 	GetAllProducts(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
+	GetProfile(ctx context.Context) (*entities.User, error)
 	Me(ctx context.Context) (*model.UserDto, error)
 }
 type UserResolver interface {
@@ -169,6 +173,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteUser(childComplexity, args["userId"].(int)), true
+
+	case "Mutation.editProfile":
+		if e.complexity.Mutation.EditProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editProfile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditProfile(childComplexity, args["input"].(model.EditUserModel)), true
 
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
@@ -328,6 +344,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetOverviewUsersSales(childComplexity, args["fitler"].(*model.OverviewUserSaleFilter), args["page"].(*model.Pagination)), true
 
+	case "Query.GetProfile":
+		if e.complexity.Query.GetProfile == nil {
+			break
+		}
+
+		return e.complexity.Query.GetProfile(childComplexity), true
+
 	case "Query.Me":
 		if e.complexity.Query.Me == nil {
 			break
@@ -482,12 +505,14 @@ var sources = []*ast.Source{
   editUser(input: EditUserModel!): User!  @auth
   login(email: String!, password: String!): UserDto!
   createNewProduct(input: NewProduct!): ProductDto!  @adminValidate
+  editProfile(input: EditUserModel!): User! @auth
 }
 `, BuiltIn: false},
 	{Name: "graph/query.graphqls", Input: `type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
   GetOverviewUsersSales(fitler: OverviewUserSaleFilter,page: Pagination): [OverviewUserSaleDto!]! @auth
   GetAllProducts(page: Pagination): [ProductDto!]! @auth
+  GetProfile: User! @auth
   Me: UserDto! @auth
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
@@ -525,6 +550,7 @@ input EditUserModel {
   userName: String!
   roleName: String!
   phoneNumber: String
+  password: String
 }
 
 type UserDto {
@@ -629,6 +655,21 @@ func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, 
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editProfile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EditUserModel
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNEditUserModel2pbᚑbackendᚋgraphᚋmodelᚐEditUserModel(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1066,6 +1107,68 @@ func (ec *executionContext) _Mutation_createNewProduct(ctx context.Context, fiel
 	res := resTmp.(*model.ProductDto)
 	fc.Result = res
 	return ec.marshalNProductDto2ᚖpbᚑbackendᚋgraphᚋmodelᚐProductDto(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editProfile_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().EditProfile(rctx, args["input"].(model.EditUserModel))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *pb-backend/entities.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖpbᚑbackendᚋentitiesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OverviewUserSaleDto_UserName(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
@@ -1727,6 +1830,61 @@ func (ec *executionContext) _Query_GetAllProducts(ctx context.Context, field gra
 	res := resTmp.([]*model.ProductDto)
 	fc.Result = res
 	return ec.marshalNProductDto2ᚕᚖpbᚑbackendᚋgraphᚋmodelᚐProductDtoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_GetProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetProfile(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *pb-backend/entities.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖpbᚑbackendᚋentitiesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_Me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3397,6 +3555,14 @@ func (ec *executionContext) unmarshalInputEditUserModel(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3684,6 +3850,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "editProfile":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_editProfile(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3937,6 +4113,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_GetAllProducts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "GetProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_GetProfile(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

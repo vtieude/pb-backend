@@ -11,6 +11,7 @@ type EditUserModel struct {
 	UserName    string  `json:"userName"`
 	RoleName    string  `json:"roleName"`
 	PhoneNumber *string `json:"phoneNumber"`
+	Password    *string `json:"password"`
 }
 
 type NewProduct struct {
