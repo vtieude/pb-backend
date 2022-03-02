@@ -28,6 +28,7 @@ type PbConfig struct {
 type MyCustomClaims struct {
 	Email string `json:"email"`
 	ID    int    `json:"userid"`
+	Role  string `json:"role"`
 	jwt.StandardClaims
 }
 

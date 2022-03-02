@@ -13,8 +13,7 @@ import (
 )
 
 type IProductService interface {
-	GetAllProductsForAdmin(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error)
-	GetAllProductsForStaff(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error)
+	GetAllProducts(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error)
 	CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error)
 }
 type ProductService struct {
@@ -24,7 +23,15 @@ type ProductService struct {
 // define provider
 var NewProductService = wire.NewSet(wire.Struct(new(ProductService), "*"), wire.Bind(new(IProductService), new(*ProductService)))
 
-func (p *ProductService) GetAllProductsForAdmin(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error) {
+func (p *ProductService) GetAllProducts(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error) {
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
+	}
+	if claims.Role == consts.ROLE_USER_ADMIN || claims.Role == consts.ROLE_USER_SUPER_ADMIN {
+		return p.getAllProductsForAdmin(ctx, pagination)
+	}
+	var result []*model.ProductDto
 	var products []entities.Product
 	productFitler := sqrl.Select("*").From("product p")
 	productFitler.Where(sqrl.Eq{"p.active": true})
@@ -32,31 +39,7 @@ func (p *ProductService) GetAllProductsForAdmin(ctx context.Context, pagination 
 	if err != nil {
 		return nil, err
 	}
-	var result []*model.ProductDto
-	for _, product := range products {
-		category := helper.ConvertToString(&product.Category)
-		result = append(result, &model.ProductDto{
-			ID:           product.ID,
-			Name:         &product.Name,
-			ProductKey:   product.ProductKey,
-			Category:     &category,
-			Price:        product.Price,
-			SellingPrice: product.SellingPrice,
-			Number:       product.Quantity,
-		})
-	}
-	return result, nil
-}
 
-func (p *ProductService) GetAllProductsForStaff(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error) {
-	var products []entities.Product
-	productFitler := sqrl.Select("*").From("product p")
-	productFitler.Where(sqrl.Eq{"p.active": true})
-	err := p.DB.QueryContext(ctx, &products, productFitler)
-	if err != nil {
-		return nil, err
-	}
-	var result []*model.ProductDto
 	for _, product := range products {
 		category := helper.ConvertToString(&product.Category)
 		result = append(result, &model.ProductDto{
@@ -82,8 +65,14 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.NewPr
 		return nil, &model.MyError{Message: consts.ERR_DUPLICATE_PRODUCT_KEY}
 	}
 	newProduct := &entities.Product{
-		Name:       strings.TrimSpace(input.Name),
-		ProductKey: keyName,
+		Name:         strings.TrimSpace(input.Name),
+		ProductKey:   keyName,
+		Price:        input.Price,
+		Category:     helper.ConvertToNullPointSqlString(input.Category),
+		SellingPrice: input.SellingPrice,
+		Quantity:     input.Number,
+		Description:  helper.ConvertToNullPointSqlString(input.Description),
+		ImageURL:     helper.ConvertToNullPointSqlString(input.ImageURL),
 	}
 	newProduct.Insert(ctx, p.DB)
 	return &model.ProductDto{
@@ -91,4 +80,28 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.NewPr
 		Name:       &newProduct.Name,
 		ProductKey: newProduct.ProductKey,
 	}, nil
+}
+
+func (p *ProductService) getAllProductsForAdmin(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error) {
+	var products []entities.Product
+	productFitler := sqrl.Select("*").From("product p")
+	productFitler.Where(sqrl.Eq{"p.active": true})
+	err := p.DB.QueryContext(ctx, &products, productFitler)
+	if err != nil {
+		return nil, err
+	}
+	var result []*model.ProductDto
+	for _, product := range products {
+		category := helper.ConvertToString(&product.Category)
+		result = append(result, &model.ProductDto{
+			ID:           product.ID,
+			Name:         &product.Name,
+			ProductKey:   product.ProductKey,
+			Category:     &category,
+			Price:        product.Price,
+			SellingPrice: product.SellingPrice,
+			Number:       product.Quantity,
+		})
+	}
+	return result, nil
 }

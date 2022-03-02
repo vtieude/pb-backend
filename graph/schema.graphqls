@@ -47,6 +47,12 @@ type UserDto {
 input NewProduct {
   name: String!
   key: String!
+  category: String
+  price: Float!
+  sellingPrice: Float!
+  number: Int!
+  description: String
+  imageURL: String
 }
 
 
@@ -58,6 +64,8 @@ type ProductDto {
   price: Float!
   sellingPrice: Float!
   number: Int!
+  description: String
+  imageURL: String
 }
 
 # Sale

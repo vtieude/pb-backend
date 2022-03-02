@@ -244,6 +244,7 @@ func (u *UserService) GenerateToken(userLogin model.UserRoleDto) (string, error)
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, entities.MyCustomClaims{
 		Email: userLogin.Email,
 		ID:    userLogin.ID,
+		Role:  userLogin.RoleName,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().AddDate(0, 3, 0).Unix(),
 			// ExpiresAt: time.Now().Add(time.Second * 10).Unix(),

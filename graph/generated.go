@@ -67,7 +67,9 @@ type ComplexityRoot struct {
 
 	ProductDto struct {
 		Category     func(childComplexity int) int
+		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
+		ImageURL     func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Number       func(childComplexity int) int
 		Price        func(childComplexity int) int
@@ -76,11 +78,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllProductsForAdmin func(childComplexity int, page *model.Pagination) int
-		GetAllProductsForStaff func(childComplexity int, page *model.Pagination) int
-		GetAllUsers            func(childComplexity int, page *model.Pagination) int
-		GetOverviewUsersSales  func(childComplexity int, fitler *model.OverviewUserSaleFilter, page *model.Pagination) int
-		Me                     func(childComplexity int) int
+		GetAllProducts        func(childComplexity int, page *model.Pagination) int
+		GetAllUsers           func(childComplexity int, page *model.Pagination) int
+		GetOverviewUsersSales func(childComplexity int, fitler *model.OverviewUserSaleFilter, page *model.Pagination) int
+		Me                    func(childComplexity int) int
 	}
 
 	User struct {
@@ -111,8 +112,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetAllUsers(ctx context.Context, page *model.Pagination) ([]*entities.User, error)
 	GetOverviewUsersSales(ctx context.Context, fitler *model.OverviewUserSaleFilter, page *model.Pagination) ([]*model.OverviewUserSaleDto, error)
-	GetAllProductsForStaff(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
-	GetAllProductsForAdmin(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
+	GetAllProducts(ctx context.Context, page *model.Pagination) ([]*model.ProductDto, error)
 	Me(ctx context.Context) (*model.UserDto, error)
 }
 type UserResolver interface {
@@ -236,12 +236,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProductDto.Category(childComplexity), true
 
+	case "ProductDto.description":
+		if e.complexity.ProductDto.Description == nil {
+			break
+		}
+
+		return e.complexity.ProductDto.Description(childComplexity), true
+
 	case "ProductDto.id":
 		if e.complexity.ProductDto.ID == nil {
 			break
 		}
 
 		return e.complexity.ProductDto.ID(childComplexity), true
+
+	case "ProductDto.imageURL":
+		if e.complexity.ProductDto.ImageURL == nil {
+			break
+		}
+
+		return e.complexity.ProductDto.ImageURL(childComplexity), true
 
 	case "ProductDto.name":
 		if e.complexity.ProductDto.Name == nil {
@@ -278,29 +292,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProductDto.SellingPrice(childComplexity), true
 
-	case "Query.GetAllProductsForAdmin":
-		if e.complexity.Query.GetAllProductsForAdmin == nil {
+	case "Query.GetAllProducts":
+		if e.complexity.Query.GetAllProducts == nil {
 			break
 		}
 
-		args, err := ec.field_Query_GetAllProductsForAdmin_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_GetAllProducts_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetAllProductsForAdmin(childComplexity, args["page"].(*model.Pagination)), true
-
-	case "Query.GetAllProductsForStaff":
-		if e.complexity.Query.GetAllProductsForStaff == nil {
-			break
-		}
-
-		args, err := ec.field_Query_GetAllProductsForStaff_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetAllProductsForStaff(childComplexity, args["page"].(*model.Pagination)), true
+		return e.complexity.Query.GetAllProducts(childComplexity, args["page"].(*model.Pagination)), true
 
 	case "Query.GetAllUsers":
 		if e.complexity.Query.GetAllUsers == nil {
@@ -485,8 +487,7 @@ var sources = []*ast.Source{
 	{Name: "graph/query.graphqls", Input: `type Query {
   GetAllUsers(page: Pagination): [User!]! @auth
   GetOverviewUsersSales(fitler: OverviewUserSaleFilter,page: Pagination): [OverviewUserSaleDto!]! @auth
-  GetAllProductsForStaff(page: Pagination): [ProductDto!]! @auth
-  GetAllProductsForAdmin(page: Pagination): [ProductDto!]! @adminValidate
+  GetAllProducts(page: Pagination): [ProductDto!]! @auth
   Me: UserDto! @auth
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
@@ -538,6 +539,12 @@ type UserDto {
 input NewProduct {
   name: String!
   key: String!
+  category: String
+  price: Float!
+  sellingPrice: Float!
+  number: Int!
+  description: String
+  imageURL: String
 }
 
 
@@ -549,6 +556,8 @@ type ProductDto {
   price: Float!
   sellingPrice: Float!
   number: Int!
+  description: String
+  imageURL: String
 }
 
 # Sale
@@ -662,22 +671,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_GetAllProductsForAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.Pagination
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg0, err = ec.unmarshalOPagination2ᚖpbᚑbackendᚋgraphᚋmodelᚐPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_GetAllProductsForStaff_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_GetAllProducts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.Pagination
@@ -1485,6 +1479,70 @@ func (ec *executionContext) _ProductDto_number(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ProductDto_description(ctx context.Context, field graphql.CollectedField, obj *model.ProductDto) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProductDto",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProductDto_imageURL(ctx context.Context, field graphql.CollectedField, obj *model.ProductDto) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProductDto",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_GetAllUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1609,7 +1667,7 @@ func (ec *executionContext) _Query_GetOverviewUsersSales(ctx context.Context, fi
 	return ec.marshalNOverviewUserSaleDto2ᚕᚖpbᚑbackendᚋgraphᚋmodelᚐOverviewUserSaleDtoᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_GetAllProductsForStaff(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_GetAllProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1626,7 +1684,7 @@ func (ec *executionContext) _Query_GetAllProductsForStaff(ctx context.Context, f
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_GetAllProductsForStaff_args(ctx, rawArgs)
+	args, err := ec.field_Query_GetAllProducts_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1635,75 +1693,13 @@ func (ec *executionContext) _Query_GetAllProductsForStaff(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().GetAllProductsForStaff(rctx, args["page"].(*model.Pagination))
+			return ec.resolvers.Query().GetAllProducts(rctx, args["page"].(*model.Pagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.Auth == nil {
 				return nil, errors.New("directive auth is not implemented")
 			}
 			return ec.directives.Auth(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.([]*model.ProductDto); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*pb-backend/graph/model.ProductDto`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.ProductDto)
-	fc.Result = res
-	return ec.marshalNProductDto2ᚕᚖpbᚑbackendᚋgraphᚋmodelᚐProductDtoᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_GetAllProductsForAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_GetAllProductsForAdmin_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().GetAllProductsForAdmin(rctx, args["page"].(*model.Pagination))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.AdminValidate == nil {
-				return nil, errors.New("directive adminValidate is not implemented")
-			}
-			return ec.directives.AdminValidate(ctx, nil, directive0)
 		}
 
 		tmp, err := directive1(rctx)
@@ -3432,6 +3428,54 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 			if err != nil {
 				return it, err
 			}
+		case "category":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			it.Category, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "price":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+			it.Price, err = ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sellingPrice":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sellingPrice"))
+			it.SellingPrice, err = ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "number":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("number"))
+			it.Number, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imageURL":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageURL"))
+			it.ImageURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3793,6 +3837,20 @@ func (ec *executionContext) _ProductDto(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "description":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProductDto_description(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "imageURL":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProductDto_imageURL(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3869,7 +3927,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "GetAllProductsForStaff":
+		case "GetAllProducts":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -3878,30 +3936,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_GetAllProductsForStaff(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "GetAllProductsForAdmin":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_GetAllProductsForAdmin(ctx, field)
+				res = ec._Query_GetAllProducts(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

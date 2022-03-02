@@ -14,8 +14,14 @@ type EditUserModel struct {
 }
 
 type NewProduct struct {
-	Name string `json:"name"`
-	Key  string `json:"key"`
+	Name         string  `json:"name"`
+	Key          string  `json:"key"`
+	Category     *string `json:"category"`
+	Price        float64 `json:"price"`
+	SellingPrice float64 `json:"sellingPrice"`
+	Number       int     `json:"number"`
+	Description  *string `json:"description"`
+	ImageURL     *string `json:"imageURL"`
 }
 
 type NewUser struct {
@@ -45,6 +51,8 @@ type ProductDto struct {
 	Price        float64 `json:"price"`
 	SellingPrice float64 `json:"sellingPrice"`
 	Number       int     `json:"number"`
+	Description  *string `json:"description"`
+	ImageURL     *string `json:"imageURL"`
 }
 
 type UserDto struct {
