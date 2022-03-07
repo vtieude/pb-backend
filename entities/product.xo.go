@@ -107,6 +107,7 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	}
 	p.UpdatedAt = time.Now()
 	p.CreatedAt = time.Now()
+	p.Active = true
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product (` +
 		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url` +
@@ -192,11 +193,10 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM product ` +
-		`WHERE id = ?`
+	const sqlstr = `UPDATE product SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	logf(sqlstr, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID); err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), p.ID); err != nil {
 		return logerror(err)
 	}
 	// set deleted

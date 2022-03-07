@@ -54,6 +54,7 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	}
 	{{ short $t }}.UpdatedAt = time.Now()
 	{{ short $t }}.CreatedAt = time.Now()
+	{{ short $t }}.Active = true
 {{ if $t.Manual -}}
 	// insert (manual)
 	{{ sqlstr "insert_manual" $t }}
@@ -204,10 +205,10 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	}
 {{ if eq (len $t.PrimaryKeys) 1 -}}
 	// delete with single primary key
-	{{ sqlstr "delete" $t }}
+	const sqlstr = `UPDATE {{ $t.SQLName }} SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	{{ logf_pkeys $t }}
-	if _, err := {{ db "Exec" (print (short $t) "." (index $t.PrimaryKeys 0).GoName) }}; err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), {{ short $t }}.ID); err != nil {
 		return logerror(err)
 	}
 {{- else -}}

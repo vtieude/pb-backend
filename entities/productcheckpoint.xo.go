@@ -82,6 +82,7 @@ func (pcp *ProductCheckPoint) Insert(ctx context.Context, db DB) error {
 	}
 	pcp.UpdatedAt = time.Now()
 	pcp.CreatedAt = time.Now()
+	pcp.Active = true
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product_check_point (` +
 		`fk_product, fk_sale, type, updated_at, created_at, active` +
@@ -167,11 +168,10 @@ func (pcp *ProductCheckPoint) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM product_check_point ` +
-		`WHERE id = ?`
+	const sqlstr = `UPDATE product_check_point SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	logf(sqlstr, pcp.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, pcp.ID); err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), pcp.ID); err != nil {
 		return logerror(err)
 	}
 	// set deleted

@@ -74,12 +74,12 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.NewPr
 		Description:  helper.ConvertToNullPointSqlString(input.Description),
 		ImageURL:     helper.ConvertToNullPointSqlString(input.ImageURL),
 	}
-	newProduct.Insert(ctx, p.DB)
+	err = newProduct.Insert(ctx, p.DB)
 	return &model.ProductDto{
 		ID:         newProduct.ID,
 		Name:       &newProduct.Name,
 		ProductKey: newProduct.ProductKey,
-	}, nil
+	}, err
 }
 
 func (p *ProductService) getAllProductsForAdmin(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error) {

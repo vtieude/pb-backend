@@ -82,6 +82,7 @@ func (c *Customer) Insert(ctx context.Context, db DB) error {
 	}
 	c.UpdatedAt = time.Now()
 	c.CreatedAt = time.Now()
+	c.Active = true
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO customer (` +
 		`customer_name, phone, address, active, updated_at, created_at` +
@@ -167,11 +168,10 @@ func (c *Customer) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM customer ` +
-		`WHERE id = ?`
+	const sqlstr = `UPDATE customer SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	logf(sqlstr, c.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, c.ID); err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), c.ID); err != nil {
 		return logerror(err)
 	}
 	// set deleted
