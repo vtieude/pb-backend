@@ -4,5 +4,6 @@ type Mutation {
   editUser(input: EditUserModel!): User!  @auth
   login(email: String!, password: String!): UserDto!
   createNewProduct(input: NewProduct!): ProductDto!  @adminValidate
+  deleteProduct(productId: Int!): Boolean!  @adminValidate
   editProfile(input: EditUserModel!): User! @auth
 }

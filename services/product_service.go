@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"pb-backend/consts"
 	"pb-backend/entities"
 	"pb-backend/graph/model"
@@ -15,6 +16,7 @@ import (
 type IProductService interface {
 	GetAllProducts(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error)
 	CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error)
+	DeleteProduct(ctx context.Context, productId int) (bool, error)
 }
 type ProductService struct {
 	DB entities.DB
@@ -52,6 +54,12 @@ func (p *ProductService) GetAllProducts(ctx context.Context, pagination *model.P
 		})
 	}
 	return result, nil
+}
+
+func (p *ProductService) DeleteProduct(ctx context.Context, productId int) (bool, error) {
+	queryBd := fmt.Sprintf("update product set product.active = false where id = %d", productId)
+	p.DB.ExecContext(ctx, queryBd)
+	return true, nil
 }
 
 func (p *ProductService) CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error) {
@@ -95,7 +103,7 @@ func (p *ProductService) getAllProductsForAdmin(ctx context.Context, pagination 
 		category := helper.ConvertToString(&product.Category)
 		result = append(result, &model.ProductDto{
 			ID:           product.ID,
-			Name:         &product.Name,
+			Name:         helper.ConvertToPoinerString(product.Name),
 			ProductKey:   product.ProductKey,
 			Category:     &category,
 			Price:        product.Price,
