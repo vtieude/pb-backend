@@ -45,7 +45,8 @@ type UserDto {
 
 
 # Product
-input NewProduct {
+input ProductInputModel {
+  id: Int
   name: String!
   key: String!
   category: String

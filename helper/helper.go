@@ -34,7 +34,7 @@ func ConvertToNullPointSqlString(data *string) sql.NullString {
 }
 
 func ConvertToString(data *sql.NullString) string {
-	if data == nil || data.Valid {
+	if data == nil || !data.Valid {
 		return ""
 	}
 	return data.String

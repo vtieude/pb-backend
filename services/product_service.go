@@ -14,8 +14,10 @@ import (
 )
 
 type IProductService interface {
+	GetProductDetail(ctx context.Context, id int) (*model.ProductDto, error)
 	GetAllProducts(ctx context.Context, pagination *model.Pagination) ([]*model.ProductDto, error)
-	CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error)
+	CreateNewProduct(ctx context.Context, input model.ProductInputModel) (*model.ProductDto, error)
+	EditProduct(ctx context.Context, input model.ProductInputModel) (bool, error)
 	DeleteProduct(ctx context.Context, productId int) (bool, error)
 }
 type ProductService struct {
@@ -56,13 +58,56 @@ func (p *ProductService) GetAllProducts(ctx context.Context, pagination *model.P
 	return result, nil
 }
 
+func (p *ProductService) GetProductDetail(ctx context.Context, id int) (*model.ProductDto, error) {
+	product, err := entities.ProductByID(ctx, p.DB, id)
+	if err != nil {
+		return nil, err
+	}
+	category := helper.ConvertToString(&product.Category)
+	claims, errParse := consts.CtxClaimValue(ctx)
+	if errParse != nil {
+		return nil, &model.MyError{Message: consts.ERR_USER_LOGIN_REQUIRED}
+	}
+	price := 0.0
+	if claims.Role == consts.ROLE_USER_ADMIN || claims.Role == consts.ROLE_USER_SUPER_ADMIN {
+		price = product.Price
+	}
+	return &model.ProductDto{
+		ID:           product.ID,
+		Name:         &product.Name,
+		ProductKey:   product.ProductKey,
+		Category:     &category,
+		SellingPrice: product.SellingPrice,
+		Price:        price,
+		Number:       product.Quantity,
+		Description:  &product.Description.String,
+	}, err
+}
+
 func (p *ProductService) DeleteProduct(ctx context.Context, productId int) (bool, error) {
 	queryBd := fmt.Sprintf("update product set product.active = false where id = %d", productId)
 	p.DB.ExecContext(ctx, queryBd)
 	return true, nil
 }
 
-func (p *ProductService) CreateNewProduct(ctx context.Context, input model.NewProduct) (*model.ProductDto, error) {
+func (p *ProductService) EditProduct(ctx context.Context, input model.ProductInputModel) (bool, error) {
+	if input.ID == nil {
+		return false, nil
+	}
+	product, err := entities.ProductByID(ctx, p.DB, *input.ID)
+	if err != nil {
+		return false, err
+	}
+	product.Category = helper.ConvertToNullPointSqlString(input.Category)
+	product.Name = input.Name
+	product.ProductKey = input.Key
+	product.SellingPrice = input.SellingPrice
+	product.Quantity = input.Number
+	product.Price = input.Price
+	return true, product.Update(ctx, p.DB)
+}
+
+func (p *ProductService) CreateNewProduct(ctx context.Context, input model.ProductInputModel) (*model.ProductDto, error) {
 	keyName := strings.TrimSpace(input.Key)
 	var existProduct int
 	err := p.DB.QueryRowContext(ctx, &existProduct, sqrl.Select("count(*)").From("product").Where(sqrl.Eq{"product_key": keyName}))

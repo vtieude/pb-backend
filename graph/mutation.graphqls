@@ -3,7 +3,8 @@ type Mutation {
   deleteUser(userId: Int!): Boolean!  @adminValidate
   editUser(input: EditUserModel!): User!  @auth
   login(email: String!, password: String!): UserDto!
-  createNewProduct(input: NewProduct!): ProductDto!  @adminValidate
+  createNewProduct(input: ProductInputModel!): ProductDto!  @adminValidate
+  editProduct(input: ProductInputModel!): Boolean!  @adminValidate
   deleteProduct(productId: Int!): Boolean!  @adminValidate
   editProfile(input: EditUserModel!): User! @auth
 }
