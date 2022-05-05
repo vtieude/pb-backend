@@ -17,12 +17,15 @@ import (
 const ConfigKey = "pbconfig"
 
 type PbConfig struct {
-	DbUser     string `yaml:"DbUser"`
-	DbPsw      string `yaml:"DbPsw"`
-	DbName     string `yaml:"DbName"`
-	DbHost     string `yaml:"DbHost"`
-	AppPort    string `yaml:"AppPort"`
-	AppProdEnv bool   `yaml:"AppProdEnv"`
+	DbUser      string `yaml:"DbUser"`
+	DbPsw       string `yaml:"DbPsw"`
+	DbName      string `yaml:"DbName"`
+	DbHost      string `yaml:"DbHost"`
+	AppPort     string `yaml:"AppPort"`
+	AppProdEnv  bool   `yaml:"AppProdEnv"`
+	ClientEmail string `yaml:"ClientEmail"`
+	PrivateKey  string `yaml:"PrivateKey"`
+	FolderId    string `yaml:"FolderId"`
 }
 
 type MyCustomClaims struct {

@@ -19,6 +19,7 @@ var serviceSet = wire.NewSet(
 	services.NewProductService,
 	services.NewSaleService,
 	modifies.ModifiesSet,
+	services.NewGoogleService,
 )
 var dbSet = wire.NewSet(entities.OpenConnection, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 

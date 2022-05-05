@@ -49,7 +49,7 @@ func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
 
 // wire.go:
 
-var serviceSet = wire.NewSet(services.NewUserService, services.NewProductService, services.NewSaleService, modifies.ModifiesSet)
+var serviceSet = wire.NewSet(services.NewUserService, services.NewProductService, services.NewSaleService, modifies.ModifiesSet, services.NewGoogleService)
 
 var dbSet = wire.NewSet(entities.OpenConnection, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
