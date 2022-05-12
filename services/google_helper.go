@@ -3,10 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"pb-backend/entities"
+	"pb-backend/graph/model"
+	"time"
 
 	"github.com/google/wire"
 	"golang.org/x/oauth2"
@@ -16,7 +19,7 @@ import (
 )
 
 type IGoogleService interface {
-	UploadImage(ctx context.Context, fileName string) (bool, error)
+	UploadFile(ctx context.Context, input model.ProfileImage) (string, error)
 }
 type GoogleService struct {
 }
@@ -24,22 +27,32 @@ type GoogleService struct {
 // define provider
 var NewGoogleService = wire.NewSet(wire.Struct(new(GoogleService), "*"), wire.Bind(new(IGoogleService), new(*GoogleService)))
 
-func (g *GoogleService) UploadImage(ctx context.Context, fileName string) (bool, error) {
-	filename := "tet.png"           // Filename
+func (g *GoogleService) UploadFile(ctx context.Context, input model.ProfileImage) (string, error) {
 	baseMimeType := "*/*"           // MimeType
 	client := g.serviceAccount(ctx) // Please set the json file of Service account.
-
+	filename := fmt.Sprintf("%v-%v", time.Now(), input.File.Filename)
 	srv, err := drive.New(client)
 	if err != nil {
-		return false, err
+		return "", err
 	}
-	file, err := os.Open(filename)
+	stream, err := ioutil.ReadAll(input.File.File)
+
 	if err != nil {
-		return false, err
+		return "", err
 	}
+
+	fileErr := ioutil.WriteFile(filename, stream, 0644)
+	if fileErr != nil {
+		fmt.Printf("file err %v", fileErr)
+	}
+	file, openErr := os.Open(filename)
+	if openErr != nil {
+		fmt.Printf("Error opening file: %v", openErr)
+	}
+
 	fileInf, err := file.Stat()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	defer file.Close()
 	cfg, _ := ctx.Value(entities.ConfigKey).(entities.PbConfig)
@@ -55,7 +68,7 @@ func (g *GoogleService) UploadImage(ctx context.Context, fileName string) (bool,
 		log.Fatalln(err)
 	}
 	fmt.Printf("%s\n", res.Id)
-	return true, nil
+	return res.Id, nil
 }
 
 // ServiceAccount : Use Service account

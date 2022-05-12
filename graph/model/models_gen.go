@@ -4,6 +4,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type EditUserModel struct {
@@ -55,6 +57,11 @@ type ProductInputModel struct {
 	Number       int     `json:"number"`
 	Description  *string `json:"description"`
 	ImageURL     *string `json:"imageURL"`
+}
+
+type ProfileImage struct {
+	FileName *string         `json:"fileName"`
+	File     *graphql.Upload `json:"file"`
 }
 
 type UserDto struct {

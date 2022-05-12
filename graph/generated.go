@@ -58,6 +58,7 @@ type ComplexityRoot struct {
 		EditProfile      func(childComplexity int, input model.EditUserModel) int
 		EditUser         func(childComplexity int, input model.EditUserModel) int
 		Login            func(childComplexity int, email string, password string) int
+		UploadFile       func(childComplexity int, input model.ProfileImage) int
 	}
 
 	OverviewUserSaleDto struct {
@@ -116,6 +117,7 @@ type MutationResolver interface {
 	EditProduct(ctx context.Context, input model.ProductInputModel) (bool, error)
 	DeleteProduct(ctx context.Context, productID int) (bool, error)
 	EditProfile(ctx context.Context, input model.EditUserModel) (*entities.User, error)
+	UploadFile(ctx context.Context, input model.ProfileImage) (string, error)
 }
 type QueryResolver interface {
 	GetAllUsers(ctx context.Context, page *model.Pagination) ([]*entities.User, error)
@@ -239,6 +241,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["password"].(string)), true
+
+	case "Mutation.uploadFile":
+		if e.complexity.Mutation.UploadFile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadFile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadFile(childComplexity, args["input"].(model.ProfileImage)), true
 
 	case "OverviewUserSaleDto.EarningMoney":
 		if e.complexity.OverviewUserSaleDto.EarningMoney == nil {
@@ -550,6 +564,7 @@ var sources = []*ast.Source{
   editProduct(input: ProductInputModel!): Boolean!  @adminValidate
   deleteProduct(productId: Int!): Boolean!  @adminValidate
   editProfile(input: EditUserModel!): User! @auth
+  uploadFile(input: ProfileImage!): String! @adminValidate
 }
 `, BuiltIn: false},
 	{Name: "graph/query.graphqls", Input: `type Query {
@@ -570,7 +585,7 @@ directive @adminValidate on FIELD_DEFINITION
 
 "DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
 scalar Time
-
+scalar Upload
 # User
 type User {
   id: Int!
@@ -651,6 +666,11 @@ input Pagination {
   PerPage: Int
 	Page:    Int
 	Sort:    [String!]
+}
+
+input ProfileImage {
+  fileName: String
+  file: Upload
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -785,6 +805,21 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 		}
 	}
 	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ProfileImage
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNProfileImage2pbᚑbackendᚋgraphᚋmodelᚐProfileImage(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1384,6 +1419,68 @@ func (ec *executionContext) _Mutation_editProfile(ctx context.Context, field gra
 	res := resTmp.(*entities.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖpbᚑbackendᚋentitiesᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_uploadFile_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UploadFile(rctx, args["input"].(model.ProfileImage))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.AdminValidate == nil {
+				return nil, errors.New("directive adminValidate is not implemented")
+			}
+			return ec.directives.AdminValidate(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OverviewUserSaleDto_UserName(ctx context.Context, field graphql.CollectedField, obj *model.OverviewUserSaleDto) (ret graphql.Marshaler) {
@@ -4058,6 +4155,37 @@ func (ec *executionContext) unmarshalInputProductInputModel(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputProfileImage(ctx context.Context, obj interface{}) (model.ProfileImage, error) {
+	var it model.ProfileImage
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "fileName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileName"))
+			it.FileName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "file":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+			it.File, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -4158,6 +4286,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "editProfile":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_editProfile(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "uploadFile":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadFile(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -5262,6 +5400,11 @@ func (ec *executionContext) unmarshalNProductInputModel2pbᚑbackendᚋgraphᚋm
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNProfileImage2pbᚑbackendᚋgraphᚋmodelᚐProfileImage(ctx context.Context, v interface{}) (model.ProfileImage, error) {
+	res, err := ec.unmarshalInputProfileImage(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5737,6 +5880,22 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	res := graphql.MarshalTime(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalUpload(*v)
 	return res
 }
 

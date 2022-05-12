@@ -8,7 +8,7 @@ directive @adminValidate on FIELD_DEFINITION
 
 "DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
 scalar Time
-
+scalar Upload
 # User
 type User {
   id: Int!
@@ -89,4 +89,9 @@ input Pagination {
   PerPage: Int
 	Page:    Int
 	Sort:    [String!]
+}
+
+input ProfileImage {
+  fileName: String
+  file: Upload
 }

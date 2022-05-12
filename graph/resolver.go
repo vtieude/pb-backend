@@ -13,6 +13,7 @@ type Resolver struct {
 	services.IUserService
 	services.IProductService
 	services.ISaleService
+	services.IGoogleService
 	UserResolver
 }
 

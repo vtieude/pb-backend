@@ -7,4 +7,5 @@ type Mutation {
   editProduct(input: ProductInputModel!): Boolean!  @adminValidate
   deleteProduct(productId: Int!): Boolean!  @adminValidate
   editProfile(input: EditUserModel!): User! @auth
+  uploadFile(input: ProfileImage!): String! @adminValidate
 }
