@@ -8,7 +8,6 @@ directive @adminValidate on FIELD_DEFINITION
 
 "DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
 scalar Time
-scalar Upload
 # User
 type User {
   id: Int!
@@ -54,7 +53,8 @@ input ProductInputModel {
   sellingPrice: Float!
   number: Int!
   description: String
-  imageURL: String
+  imageBase64: String
+  imagePrefix: String
 }
 
 
@@ -67,7 +67,8 @@ type ProductDto {
   sellingPrice: Float!
   number: Int!
   description: String
-  imageURL: String
+  imagePrefix: String
+  imageBase64: String
 }
 
 # Sale
@@ -93,5 +94,5 @@ input Pagination {
 
 input ProfileImage {
   fileName: String
-  file: Upload
+  fileBase64: String
 }

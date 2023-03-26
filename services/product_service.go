@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"pb-backend/consts"
 	"pb-backend/entities"
@@ -72,6 +73,13 @@ func (p *ProductService) GetProductDetail(ctx context.Context, id int) (*model.P
 	if claims.Role == consts.ROLE_USER_ADMIN || claims.Role == consts.ROLE_USER_SUPER_ADMIN {
 		price = product.Price
 	}
+	var senc *string
+	var prefix *string
+	if product.ImageBase64 != nil {
+		convertString := base64.StdEncoding.EncodeToString(product.ImageBase64)
+		senc = helper.ConvertToPoinerString(convertString)
+		prefix = helper.ConvertToPoinerString(helper.ConvertToString(&product.ImagePrefix))
+	}
 	return &model.ProductDto{
 		ID:           product.ID,
 		Name:         &product.Name,
@@ -81,6 +89,8 @@ func (p *ProductService) GetProductDetail(ctx context.Context, id int) (*model.P
 		Price:        price,
 		Number:       product.Quantity,
 		Description:  &product.Description.String,
+		ImageBase64:  senc,
+		ImagePrefix:  prefix,
 	}, err
 }
 
@@ -117,6 +127,18 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.Produ
 	if existProduct > 0 {
 		return nil, &model.MyError{Message: consts.ERR_DUPLICATE_PRODUCT_KEY}
 	}
+	var blob []byte
+	var imagePrefix string
+	if input.ImageBase64 != nil {
+		imageString := *input.ImageBase64
+		imagePrefix = imageString[:strings.IndexByte(imageString, ',')+1]
+		blob, err = base64.StdEncoding.DecodeString(imageString[strings.IndexByte(imageString, ',')+1:])
+		if err != nil {
+			fmt.Printf("Error decoding Base64 encoded data %v", err)
+		}
+	} else {
+		imagePrefix = ""
+	}
 	newProduct := &entities.Product{
 		Name:         strings.TrimSpace(input.Name),
 		ProductKey:   keyName,
@@ -125,7 +147,8 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.Produ
 		SellingPrice: input.SellingPrice,
 		Quantity:     input.Number,
 		Description:  helper.ConvertToNullPointSqlString(input.Description),
-		ImageURL:     helper.ConvertToNullPointSqlString(input.ImageURL),
+		ImagePrefix:  helper.ConvertToNullPointSqlString(&imagePrefix),
+		ImageBase64:  blob,
 	}
 	err = newProduct.Insert(ctx, p.DB)
 	return &model.ProductDto{

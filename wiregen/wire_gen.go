@@ -30,11 +30,13 @@ func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
 	saleService := &services.SaleService{
 		DB: dbConnection,
 	}
+	googleService := &services.GoogleService{}
 	userResolver := &resolvers.UserResolver{}
 	resolver := &graph.Resolver{
 		IUserService:    userService,
 		IProductService: productService,
 		ISaleService:    saleService,
+		IGoogleService:  googleService,
 		UserResolver:    userResolver,
 	}
 	myCustomHttpHandler := &modifies.MyCustomHttpHandler{

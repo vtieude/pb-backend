@@ -37,3 +37,14 @@ go run github.com/vektah/dataloaden UserLoader int *../entities.User
 
 #For Mac with xo schema issue
 unsetopt nomatch
+------------------------------ Using ----------------------------------------
+-- Generate new model schema
+go run github.com/99designs/gqlgen
+-- Generate dependencies
+wire ./wiregen
+-- Generate Entity database 
+xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version  --src templates/
+-- xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version -e *.created_at -e *.updated_at --src templates/
+
+-- Goose database
+goose -dir db/migrations mysql "root:qweqwe@tcp(localhost:3307)/app_db?parseTime=true" up  

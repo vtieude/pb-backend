@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -30,12 +31,15 @@ var NewGoogleService = wire.NewSet(wire.Struct(new(GoogleService), "*"), wire.Bi
 func (g *GoogleService) UploadFile(ctx context.Context, input model.ProfileImage) (string, error) {
 	baseMimeType := "*/*"           // MimeType
 	client := g.serviceAccount(ctx) // Please set the json file of Service account.
-	filename := fmt.Sprintf("%v-%v", time.Now(), input.File.Filename)
+	filename := fmt.Sprintf("%v-%v", time.Now(), input.FileName)
 	srv, err := drive.New(client)
 	if err != nil {
 		return "", err
 	}
-	stream, err := ioutil.ReadAll(input.File.File)
+	stream, err := base64.StdEncoding.DecodeString(*input.FileBase64)
+	if err != nil {
+		panic(err)
+	}
 
 	if err != nil {
 		return "", err

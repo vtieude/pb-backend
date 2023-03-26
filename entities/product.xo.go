@@ -23,7 +23,8 @@ type Product struct {
 	SellingPrice float64        `json:"SellingPrice" db:"selling_price"` // selling_price
 	Quantity     int            `json:"Quantity" db:"quantity"`          // quantity
 	Description  sql.NullString `json:"Description" db:"description"`    // description
-	ImageURL     sql.NullString `json:"ImageURL" db:"image_url"`         // image_url
+	ImagePrefix  sql.NullString `json:"ImagePrefix" db:"image_prefix"`   // image_prefix
+	ImageBase64  []byte         `json:"ImageBase64" db:"image_base64"`   // image_base64
 	// xo fields
 	_exists, _deleted bool
 }
@@ -40,7 +41,8 @@ type FilterProduct struct {
 	SellingPrice *float64        // selling_price
 	Quantity     *int            // quantity
 	Description  *sql.NullString // description
-	ImageURL     *sql.NullString // image_url
+	ImagePrefix  *sql.NullString // image_prefix
+	ImageBase64  *[]byte         // image_base64
 
 }
 
@@ -79,8 +81,11 @@ func (p *Product) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter Filter
 	if filter.Description != nil {
 		sqrlBuilder.Where(sqrl.Eq{"description": filter.Description})
 	}
-	if filter.ImageURL != nil {
-		sqrlBuilder.Where(sqrl.Eq{"image_url": filter.ImageURL})
+	if filter.ImagePrefix != nil {
+		sqrlBuilder.Where(sqrl.Eq{"image_prefix": filter.ImagePrefix})
+	}
+	if filter.ImageBase64 != nil {
+		sqrlBuilder.Where(sqrl.Eq{"image_base64": filter.ImageBase64})
 	}
 
 	return true
@@ -110,13 +115,13 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	p.Active = true
 	// insert (primary key generated and returned by database)
 	const sqlstr = `INSERT INTO product (` +
-		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url` +
+		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_prefix, image_base64` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL)
-	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL)
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64)
+	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64)
 	if err != nil {
 		return logerror(err)
 	}
@@ -142,11 +147,11 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	p.UpdatedAt = time.Now()
 	// update with primary key
 	const sqlstr = `UPDATE product SET ` +
-		`name = ?, product_key = ?, updated_at = ?, created_at = ?, active = ?, price = ?, category = ?, selling_price = ?, quantity = ?, description = ?, image_url = ? ` +
+		`name = ?, product_key = ?, updated_at = ?, created_at = ?, active = ?, price = ?, category = ?, selling_price = ?, quantity = ?, description = ?, image_prefix = ?, image_base64 = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL, p.ID); err != nil {
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64, p.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64, p.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -168,15 +173,15 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO product (` +
-		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_prefix, image_base64` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`name = VALUES(name), product_key = VALUES(product_key), updated_at = VALUES(updated_at), created_at = VALUES(created_at), active = VALUES(active), price = VALUES(price), category = VALUES(category), selling_price = VALUES(selling_price), quantity = VALUES(quantity), description = VALUES(description), image_url = VALUES(image_url)`
+		`name = VALUES(name), product_key = VALUES(product_key), updated_at = VALUES(updated_at), created_at = VALUES(created_at), active = VALUES(active), price = VALUES(price), category = VALUES(category), selling_price = VALUES(selling_price), quantity = VALUES(quantity), description = VALUES(description), image_prefix = VALUES(image_prefix), image_base64 = VALUES(image_base64)`
 	// run
-	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageURL); err != nil {
+	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64)
+	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImagePrefix, p.ImageBase64); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -210,7 +215,7 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_prefix, image_base64 ` +
 		`FROM product ` +
 		`WHERE id = ?`
 	// run
@@ -231,7 +236,7 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_prefix, image_base64 ` +
 		`FROM product ` +
 		`WHERE product_key = ?`
 	// run

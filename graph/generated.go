@@ -73,7 +73,8 @@ type ComplexityRoot struct {
 		Category     func(childComplexity int) int
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
-		ImageURL     func(childComplexity int) int
+		ImageBase64  func(childComplexity int) int
+		ImagePrefix  func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Number       func(childComplexity int) int
 		Price        func(childComplexity int) int
@@ -310,12 +311,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProductDto.ID(childComplexity), true
 
-	case "ProductDto.imageURL":
-		if e.complexity.ProductDto.ImageURL == nil {
+	case "ProductDto.imageBase64":
+		if e.complexity.ProductDto.ImageBase64 == nil {
 			break
 		}
 
-		return e.complexity.ProductDto.ImageURL(childComplexity), true
+		return e.complexity.ProductDto.ImageBase64(childComplexity), true
+
+	case "ProductDto.imagePrefix":
+		if e.complexity.ProductDto.ImagePrefix == nil {
+			break
+		}
+
+		return e.complexity.ProductDto.ImagePrefix(childComplexity), true
 
 	case "ProductDto.name":
 		if e.complexity.ProductDto.Name == nil {
@@ -585,7 +593,6 @@ directive @adminValidate on FIELD_DEFINITION
 
 "DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
 scalar Time
-scalar Upload
 # User
 type User {
   id: Int!
@@ -631,7 +638,8 @@ input ProductInputModel {
   sellingPrice: Float!
   number: Int!
   description: String
-  imageURL: String
+  imageBase64: String
+  imagePrefix: String
 }
 
 
@@ -644,7 +652,8 @@ type ProductDto {
   sellingPrice: Float!
   number: Int!
   description: String
-  imageURL: String
+  imagePrefix: String
+  imageBase64: String
 }
 
 # Sale
@@ -670,7 +679,7 @@ input Pagination {
 
 input ProfileImage {
   fileName: String
-  file: Upload
+  fileBase64: String
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1926,7 +1935,7 @@ func (ec *executionContext) _ProductDto_description(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _ProductDto_imageURL(ctx context.Context, field graphql.CollectedField, obj *model.ProductDto) (ret graphql.Marshaler) {
+func (ec *executionContext) _ProductDto_imagePrefix(ctx context.Context, field graphql.CollectedField, obj *model.ProductDto) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1944,7 +1953,39 @@ func (ec *executionContext) _ProductDto_imageURL(ctx context.Context, field grap
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ImageURL, nil
+		return obj.ImagePrefix, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProductDto_imageBase64(ctx context.Context, field graphql.CollectedField, obj *model.ProductDto) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProductDto",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageBase64, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4141,11 +4182,19 @@ func (ec *executionContext) unmarshalInputProductInputModel(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "imageURL":
+		case "imageBase64":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageURL"))
-			it.ImageURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageBase64"))
+			it.ImageBase64, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "imagePrefix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagePrefix"))
+			it.ImagePrefix, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4172,11 +4221,11 @@ func (ec *executionContext) unmarshalInputProfileImage(ctx context.Context, obj 
 			if err != nil {
 				return it, err
 			}
-		case "file":
+		case "fileBase64":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
-			it.File, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileBase64"))
+			it.FileBase64, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4463,9 +4512,16 @@ func (ec *executionContext) _ProductDto(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = innerFunc(ctx)
 
-		case "imageURL":
+		case "imagePrefix":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._ProductDto_imageURL(ctx, field, obj)
+				return ec._ProductDto_imagePrefix(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "imageBase64":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._ProductDto_imageBase64(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -5880,22 +5936,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	res := graphql.MarshalTime(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalUpload(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalUpload(*v)
 	return res
 }
 
