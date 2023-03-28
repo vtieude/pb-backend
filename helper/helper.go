@@ -32,6 +32,9 @@ func ConvertToNullPointSqlString(data *string) sql.NullString {
 	}
 	return sql.NullString{String: *data, Valid: true}
 }
+func ConvertToNullPointSql(data string) sql.NullString {
+	return sql.NullString{String: data, Valid: true}
+}
 
 func ConvertToString(data *sql.NullString) string {
 	if data == nil || !data.Valid {

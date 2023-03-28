@@ -8,6 +8,7 @@ goose migrate db (go install github.com/pressly/goose/v3/cmd/goose@latest) (go g
 
 ---------- Rerun command to download dependencies -------- 
 go mod vender
+go mod tidy
 ----------------------
 export GO111MODULE=off
 export GOPATH=$HOME/go
@@ -38,11 +39,15 @@ go run github.com/vektah/dataloaden UserLoader int *../entities.User
 #For Mac with xo schema issue
 unsetopt nomatch
 ------------------------------ Using ----------------------------------------
+-- Download go lib ----
+go mod tidy
+go get github.com/99designs/gqlgen
+
 -- Generate new model schema
 go run github.com/99designs/gqlgen
 -- Generate dependencies
-wire ./wiregen
--- Generate Entity database 
+wire ./wiregen ( go install github.com/google/wire/cmd/wire@latest)
+-- Generate Entity database (go get -u github.com/xo/xo)
 xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version  --src templates/
 -- xo schema 'mysql://root:qweqwe@localhost:3307/app_db?parseTime=true&columnsWithAlias=true' -o entities -e goose_db_version -e *.created_at -e *.updated_at --src templates/
 

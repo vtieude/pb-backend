@@ -10,8 +10,8 @@ type EditUserModel struct {
 	UserID      int     `json:"userId"`
 	UserName    string  `json:"userName"`
 	RoleName    string  `json:"roleName"`
-	PhoneNumber *string `json:"phoneNumber"`
-	Password    *string `json:"password"`
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+	Password    *string `json:"password,omitempty"`
 }
 
 type NewUser struct {
@@ -19,49 +19,48 @@ type NewUser struct {
 	Email       string  `json:"email"`
 	Password    string  `json:"password"`
 	RoleName    string  `json:"roleName"`
-	PhoneNumber *string `json:"phoneNumber"`
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
 }
 
 type OverviewUserSaleFilter struct {
-	UserName *string    `json:"UserName"`
-	DateTime *time.Time `json:"DateTime"`
+	UserName *string    `json:"UserName,omitempty"`
+	DateTime *time.Time `json:"DateTime,omitempty"`
 }
 
 type Pagination struct {
-	PerPage *int     `json:"PerPage"`
-	Page    *int     `json:"Page"`
-	Sort    []string `json:"Sort"`
+	PerPage *int     `json:"PerPage,omitempty"`
+	Page    *int     `json:"Page,omitempty"`
+	Sort    []string `json:"Sort,omitempty"`
 }
 
 type ProductDto struct {
 	ID           int     `json:"id"`
-	Name         *string `json:"name"`
+	Name         *string `json:"name,omitempty"`
 	ProductKey   string  `json:"productKey"`
-	Category     *string `json:"category"`
+	Category     *string `json:"category,omitempty"`
 	Price        float64 `json:"price"`
 	SellingPrice float64 `json:"sellingPrice"`
 	Number       int     `json:"number"`
-	Description  *string `json:"description"`
-	ImagePrefix  *string `json:"imagePrefix"`
-	ImageBase64  *string `json:"imageBase64"`
+	Description  *string `json:"description,omitempty"`
+	ImageURL     *string `json:"imageUrl,omitempty"`
 }
 
 type ProductInputModel struct {
-	ID           *int    `json:"id"`
+	ID           *int    `json:"id,omitempty"`
 	Name         string  `json:"name"`
 	Key          string  `json:"key"`
-	Category     *string `json:"category"`
+	Category     *string `json:"category,omitempty"`
 	Price        float64 `json:"price"`
 	SellingPrice float64 `json:"sellingPrice"`
 	Number       int     `json:"number"`
-	Description  *string `json:"description"`
-	ImageBase64  *string `json:"imageBase64"`
-	ImagePrefix  *string `json:"imagePrefix"`
+	Description  *string `json:"description,omitempty"`
+	ImageBase64  *string `json:"imageBase64,omitempty"`
+	ImagePrefix  *string `json:"imagePrefix,omitempty"`
 }
 
 type ProfileImage struct {
-	FileName   *string `json:"fileName"`
-	FileBase64 *string `json:"fileBase64"`
+	FileName   *string `json:"fileName,omitempty"`
+	FileBase64 *string `json:"fileBase64,omitempty"`
 }
 
 type UserDto struct {

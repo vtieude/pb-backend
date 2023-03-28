@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"pb-backend/consts"
 	"pb-backend/entities"
@@ -22,7 +21,8 @@ type IProductService interface {
 	DeleteProduct(ctx context.Context, productId int) (bool, error)
 }
 type ProductService struct {
-	DB entities.DB
+	DB            entities.DB
+	GoogleService IGoogleService
 }
 
 // define provider
@@ -73,12 +73,9 @@ func (p *ProductService) GetProductDetail(ctx context.Context, id int) (*model.P
 	if claims.Role == consts.ROLE_USER_ADMIN || claims.Role == consts.ROLE_USER_SUPER_ADMIN {
 		price = product.Price
 	}
-	var senc *string
-	var prefix *string
-	if product.ImageBase64 != nil {
-		convertString := base64.StdEncoding.EncodeToString(product.ImageBase64)
-		senc = helper.ConvertToPoinerString(convertString)
-		prefix = helper.ConvertToPoinerString(helper.ConvertToString(&product.ImagePrefix))
+	var urlImage string
+	if product.ImageUrl.Valid {
+		urlImage = product.ImageUrl.String
 	}
 	return &model.ProductDto{
 		ID:           product.ID,
@@ -89,8 +86,7 @@ func (p *ProductService) GetProductDetail(ctx context.Context, id int) (*model.P
 		Price:        price,
 		Number:       product.Quantity,
 		Description:  &product.Description.String,
-		ImageBase64:  senc,
-		ImagePrefix:  prefix,
+		ImageURL:     helper.ConvertToPoinerString(urlImage),
 	}, err
 }
 
@@ -114,6 +110,18 @@ func (p *ProductService) EditProduct(ctx context.Context, input model.ProductInp
 	product.SellingPrice = input.SellingPrice
 	product.Quantity = input.Number
 	product.Price = input.Price
+	if input.ImageBase64 != nil {
+		imageString := *input.ImageBase64
+		fileId, err := p.GoogleService.UploadFile(ctx, model.ProfileImage{
+			FileName:   helper.ConvertToPoinerString("file_test.png"),
+			FileBase64: helper.ConvertToPoinerString(imageString[strings.IndexByte(imageString, ',')+1:]),
+		})
+		if err != nil {
+			fmt.Println("error from google service", err)
+			return false, &model.MyError{Message: "Error from google service"}
+		}
+		product.ImageUrl = helper.ConvertToNullPointSql("https://drive.google.com/uc?export=view&id=" + fileId)
+	}
 	return true, product.Update(ctx, p.DB)
 }
 
@@ -127,17 +135,20 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.Produ
 	if existProduct > 0 {
 		return nil, &model.MyError{Message: consts.ERR_DUPLICATE_PRODUCT_KEY}
 	}
-	var blob []byte
-	var imagePrefix string
+	var imageUrl string
 	if input.ImageBase64 != nil {
 		imageString := *input.ImageBase64
-		imagePrefix = imageString[:strings.IndexByte(imageString, ',')+1]
-		blob, err = base64.StdEncoding.DecodeString(imageString[strings.IndexByte(imageString, ',')+1:])
+		fileId, err := p.GoogleService.UploadFile(ctx, model.ProfileImage{
+			FileName:   helper.ConvertToPoinerString("file_test.png"),
+			FileBase64: helper.ConvertToPoinerString(imageString[strings.IndexByte(imageString, ',')+1:]),
+		})
 		if err != nil {
-			fmt.Printf("Error decoding Base64 encoded data %v", err)
+			fmt.Println("error from google service", err)
+			return nil, &model.MyError{Message: "Error from google service"}
 		}
+		imageUrl = "https://drive.google.com/uc?export=view&id=" + fileId
 	} else {
-		imagePrefix = ""
+		imageUrl = ""
 	}
 	newProduct := &entities.Product{
 		Name:         strings.TrimSpace(input.Name),
@@ -147,8 +158,7 @@ func (p *ProductService) CreateNewProduct(ctx context.Context, input model.Produ
 		SellingPrice: input.SellingPrice,
 		Quantity:     input.Number,
 		Description:  helper.ConvertToNullPointSqlString(input.Description),
-		ImagePrefix:  helper.ConvertToNullPointSqlString(&imagePrefix),
-		ImageBase64:  blob,
+		ImageUrl:     helper.ConvertToNullPointSqlString(&imageUrl),
 	}
 	err = newProduct.Insert(ctx, p.DB)
 	return &model.ProductDto{

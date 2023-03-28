@@ -6,17 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"pb-backend/entities"
 	"pb-backend/graph/model"
 	"time"
 
 	"github.com/google/wire"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/option"
 )
 
 type IGoogleService interface {
@@ -29,10 +26,8 @@ type GoogleService struct {
 var NewGoogleService = wire.NewSet(wire.Struct(new(GoogleService), "*"), wire.Bind(new(IGoogleService), new(*GoogleService)))
 
 func (g *GoogleService) UploadFile(ctx context.Context, input model.ProfileImage) (string, error) {
-	baseMimeType := "*/*"           // MimeType
-	client := g.serviceAccount(ctx) // Please set the json file of Service account.
-	filename := fmt.Sprintf("%v-%v", time.Now(), input.FileName)
-	srv, err := drive.New(client)
+	filename := fmt.Sprintf("%v-%s", time.Now().Format("01-02-2006"), *input.FileName)
+	srv, err := drive.NewService(ctx, option.WithCredentialsFile("credential.json"), option.WithScopes(drive.DriveScope))
 	if err != nil {
 		return "", err
 	}
@@ -49,43 +44,36 @@ func (g *GoogleService) UploadFile(ctx context.Context, input model.ProfileImage
 	if fileErr != nil {
 		fmt.Printf("file err %v", fileErr)
 	}
-	file, openErr := os.Open(filename)
-	if openErr != nil {
-		fmt.Printf("Error opening file: %v", openErr)
+	file, err := os.Open(filename)
+	info, _ := file.Stat()
+	if err != nil {
+		log.Fatalf("Warning: %v", err)
 	}
 
-	fileInf, err := file.Stat()
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-	cfg, _ := ctx.Value(entities.ConfigKey).(entities.PbConfig)
-	f := &drive.File{
-		Parents: []string{cfg.FolderId},
-		Name:    filename}
-	res, err := srv.Files.
-		Create(f).
-		ResumableMedia(context.Background(), file, fileInf.Size(), baseMimeType).
-		ProgressUpdater(func(now, size int64) { fmt.Printf("%d, %d\r", now, size) }).
-		Do()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("%s\n", res.Id)
-	return res.Id, nil
-}
-
-// ServiceAccount : Use Service account
-func (g *GoogleService) serviceAccount(ctx context.Context) *http.Client {
+	// Create File metadata
 	cfg, _ := ctx.Value(entities.ConfigKey).(entities.PbConfig)
-	config := &jwt.Config{
-		Email:      cfg.ClientEmail,
-		PrivateKey: []byte(cfg.PrivateKey),
-		Scopes: []string{
-			drive.DriveScope,
-		},
-		TokenURL: google.JWTTokenURL,
+	fmt.Println("parent file id", cfg.ClientEmail)
+	f := &drive.File{
+		Parents: []string{"1otztb9RgRJFu-ObStqPrRnWNuM8GAoGC"},
+		Name:    info.Name()}
+
+	// Create and upload the file
+	res, err := srv.Files.
+		Create(f).
+		Media(file).
+		ProgressUpdater(func(now, size int64) { fmt.Printf("%d, %d\r", now, size) }).
+		Do()
+	file.Close()
+	e := os.Remove(filename)
+	if e != nil {
+		fmt.Println("Error delete file from google, ", e)
 	}
-	client := config.Client(oauth2.NoContext)
-	return client
+	if err != nil {
+		fmt.Println("Error response from google, ", err)
+	}
+	fmt.Println("response from google, ", res.Id)
+	return res.Id, nil
 }

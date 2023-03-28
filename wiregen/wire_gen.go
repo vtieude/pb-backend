@@ -24,13 +24,14 @@ func InitializeApp(ctx context.Context, log2 log.Logger) (*App, error) {
 	userService := &services.UserService{
 		DB: dbConnection,
 	}
+	googleService := &services.GoogleService{}
 	productService := &services.ProductService{
-		DB: dbConnection,
+		DB:            dbConnection,
+		GoogleService: googleService,
 	}
 	saleService := &services.SaleService{
 		DB: dbConnection,
 	}
-	googleService := &services.GoogleService{}
 	userResolver := &resolvers.UserResolver{}
 	resolver := &graph.Resolver{
 		IUserService:    userService,

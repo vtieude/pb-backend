@@ -67,8 +67,7 @@ type ProductDto {
   sellingPrice: Float!
   number: Int!
   description: String
-  imagePrefix: String
-  imageBase64: String
+  imageUrl: String
 }
 
 # Sale

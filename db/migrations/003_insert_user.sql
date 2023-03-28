@@ -1,7 +1,7 @@
 -- +goose Up
 
 INSERT into user(username, password, email)
-values("admin", "$2a$14$uAMQMJTteRe5oPvgoaGIgeWMujBvgUdud2kbsS1l5yU0.AO6o/qDO", "admin@gmail.com");
+values("admin", "$2y$10$kUqgITGupONcsThUaDootumKvSzdmyDkC9XPcB1iOCDH.28iC.JSG", "admin@gmail.com");
 
 INSERT into `role`(role_name, label)
 values("admin", "Admin");
