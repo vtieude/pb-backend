@@ -42,7 +42,12 @@ func ConvertToString(data *sql.NullString) string {
 	}
 	return data.String
 }
+
 func ConvertToPoinerString(data string) *string {
+	return &data
+}
+
+func ConvertSQLToPoinerString(data string) *string {
 	return &data
 }
 

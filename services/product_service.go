@@ -176,8 +176,13 @@ func (p *ProductService) getAllProductsForAdmin(ctx context.Context, pagination 
 	if err != nil {
 		return nil, err
 	}
+
 	var result []*model.ProductDto
 	for _, product := range products {
+		var imageUrl = ""
+		if product.ImageUrl.Valid {
+			imageUrl = product.ImageUrl.String
+		}
 		category := helper.ConvertToString(&product.Category)
 		result = append(result, &model.ProductDto{
 			ID:           product.ID,
@@ -187,6 +192,7 @@ func (p *ProductService) getAllProductsForAdmin(ctx context.Context, pagination 
 			Price:        product.Price,
 			SellingPrice: product.SellingPrice,
 			Number:       product.Quantity,
+			ImageURL:     helper.ConvertToPoinerString(imageUrl),
 		})
 	}
 	return result, nil
