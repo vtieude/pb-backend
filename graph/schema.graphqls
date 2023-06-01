@@ -4,19 +4,94 @@
 directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 # new directive
 directive @auth on FIELD_DEFINITION
+directive @adminValidate on FIELD_DEFINITION
+
+"DateTime in ISO8601, e.g. 2006-01-31T15:04:05-07:00"
+scalar Time
+# User
 type User {
-  id: ID!
+  id: Int!
+  Username:  String!
+	Email:     String! 
+	RoleLabel: String! 
+	Role:      String! 
+  PhoneNumber: String
+	Active:    Boolean  
 }
 
 input NewUser {
-  name: String!
+  userName: String!
+  email: String!
+  password: String!
+  roleName: String!
+  phoneNumber: String
 }
 
-type Friend {
-  City: String
+input EditUserModel {
+  userId: Int!
+  userName: String!
+  roleName: String!
+  phoneNumber: String
+  password: String
 }
+
+type UserDto {
+  id: Int!
+  token: String!
+  role: String!
+  userName: String!
+}
+
+
+# Product
+input ProductInputModel {
+  id: Int
+  name: String!
+  key: String!
+  category: String
+  price: Float!
+  sellingPrice: Float!
+  number: Int!
+  description: String
+  imageBase64: String
+  imagePrefix: String
+}
+
+
+type ProductDto {
+  id: Int!
+  name: String
+	productKey: String!
+  category: String
+  price: Float!
+  sellingPrice: Float!
+  number: Int!
+  description: String
+  imageUrl: String
+}
+
+# Sale
+input OverviewUserSaleFilter {
+  UserName: String
+  DateTime: Time
+}
+
+type OverviewUserSaleDto {
+  UserName: String!   
+  UserEmail: String
+  UserRole: String!
+  TotalSaledProduct: Int!
+  EarningMoney: Float!
+}
+
+# Helper
 input Pagination {
   PerPage: Int
 	Page:    Int
 	Sort:    [String!]
+}
+
+input ProfileImage {
+  fileName: String
+  fileBase64: String
 }

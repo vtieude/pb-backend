@@ -26,10 +26,7 @@ services:
     depends_on:
       - mysql
     environment:
-      - MYSQL_HOST=db-mysql
-      - MYSQL_USER=db_user
-      - MYSQL_PASSWORD=qweqwe
-      - MYSQL_DATABASE=app_db
+      - docker.env
     deploy:
       restart_policy:
         condition: on-failure

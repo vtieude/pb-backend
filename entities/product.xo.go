@@ -4,18 +4,84 @@ package entities
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/elgris/sqrl"
 )
 
-// Product represents a row from 'app_db.product'.
+// Product represents a row from 'product'.
 type Product struct {
-	ID         int    `json:"id"`          // id
-	Name       string `json:"name"`        // name
-	ProductKey string `json:"product_key"` // product_key
-	Active     bool   `json:"active"`      // active
+	ID           int            `json:"ID" db:"id"`                      // id
+	Name         string         `json:"Name" db:"name"`                  // name
+	ProductKey   string         `json:"ProductKey" db:"product_key"`     // product_key
+	UpdatedAt    time.Time      `json:"UpdatedAt" db:"updated_at"`       // updated_at
+	CreatedAt    time.Time      `json:"CreatedAt" db:"created_at"`       // created_at
+	Active       bool           `json:"Active" db:"active"`              // active
+	Price        float64        `json:"Price" db:"price"`                // price
+	Category     sql.NullString `json:"Category" db:"category"`          // category
+	SellingPrice float64        `json:"SellingPrice" db:"selling_price"` // selling_price
+	Quantity     int            `json:"Quantity" db:"quantity"`          // quantity
+	Description  sql.NullString `json:"Description" db:"description"`    // description
+	ImageUrl  sql.NullString `json:"ImageUrl" db:"image_url"`   // image_url
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterProduct struct {
+	ID           *int            // id
+	Name         *string         // name
+	ProductKey   *string         // product_key
+	UpdatedAt    *time.Time      // updated_at
+	CreatedAt    *time.Time      // created_at
+	Active       *bool           // active
+	Price        *float64        // price
+	Category     *sql.NullString // category
+	SellingPrice *float64        // selling_price
+	Quantity     *int            // quantity
+	Description  *sql.NullString // description
+	ImageUrl  *sql.NullString // image_url
+}
+
+// Apply filter to sqrl Product .
+func (p *Product) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterProduct) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.Name != nil {
+		sqrlBuilder.Where(sqrl.Eq{"name": filter.Name})
+	}
+	if filter.ProductKey != nil {
+		sqrlBuilder.Where(sqrl.Eq{"product_key": filter.ProductKey})
+	}
+	if filter.UpdatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"updated_at": filter.UpdatedAt})
+	}
+	if filter.CreatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"created_at": filter.CreatedAt})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+	if filter.Price != nil {
+		sqrlBuilder.Where(sqrl.Eq{"price": filter.Price})
+	}
+	if filter.Category != nil {
+		sqrlBuilder.Where(sqrl.Eq{"category": filter.Category})
+	}
+	if filter.SellingPrice != nil {
+		sqrlBuilder.Where(sqrl.Eq{"selling_price": filter.SellingPrice})
+	}
+	if filter.Quantity != nil {
+		sqrlBuilder.Where(sqrl.Eq{"quantity": filter.Quantity})
+	}
+	if filter.Description != nil {
+		sqrlBuilder.Where(sqrl.Eq{"description": filter.Description})
+	}
+	if filter.ImageUrl != nil {
+		sqrlBuilder.Where(sqrl.Eq{"image_url": filter.ImageUrl})
+	}
+	return true
 }
 
 // Exists returns true when the Product exists in the database.
@@ -37,15 +103,18 @@ func (p *Product) Insert(ctx context.Context, db DB) error {
 	case p._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	p.UpdatedAt = time.Now()
+	p.CreatedAt = time.Now()
+	p.Active = true
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.product (` +
-		`name, product_key, active` +
+	const sqlstr = `INSERT INTO product (` +
+		`name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url` +
 		`) VALUES (` +
-		`?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active)
-	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active)
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl)
+	res, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl)
 	if err != nil {
 		return logerror(err)
 	}
@@ -68,13 +137,14 @@ func (p *Product) Update(ctx context.Context, db DB) error {
 	case p._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	p.UpdatedAt = time.Now()
 	// update with primary key
-	const sqlstr = `UPDATE app_db.product SET ` +
-		`name = ?, product_key = ?, active = ? ` +
+	const sqlstr = `UPDATE product SET ` +
+		`name = ?, product_key = ?, updated_at = ?, created_at = ?, active = ?, price = ?, category = ?, selling_price = ?, quantity = ?, description = ?, image_url = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, p.Name, p.ProductKey, p.Active, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.Active, p.ID); err != nil {
+	logf(sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl, p.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl, p.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -95,16 +165,16 @@ func (p *Product) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.product (` +
-		`id, name, product_key, active` +
+	const sqlstr = `INSERT INTO product (` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`name = VALUES(name), product_key = VALUES(product_key), active = VALUES(active)`
+		`name = VALUES(name), product_key = VALUES(product_key), updated_at = VALUES(updated_at), created_at = VALUES(created_at), active = VALUES(active), price = VALUES(price), category = VALUES(category), selling_price = VALUES(selling_price), quantity = VALUES(quantity), description = VALUES(description), image_url = VALUES(image_url)`
 	// run
-	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.Active); err != nil {
+	logf(sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl)
+	if _, err := db.ExecContext(ctx, sqlstr, p.ID, p.Name, p.ProductKey, p.UpdatedAt, p.CreatedAt, p.Active, p.Price, p.Category, p.SellingPrice, p.Quantity, p.Description, p.ImageUrl); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -121,11 +191,10 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.product ` +
-		`WHERE id = ?`
+	const sqlstr = `UPDATE product SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	logf(sqlstr, p.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, p.ID); err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), p.ID); err != nil {
 		return logerror(err)
 	}
 	// set deleted
@@ -133,14 +202,14 @@ func (p *Product) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// ProductByID retrieves a row from 'app_db.product' as a Product.
+// ProductByID retrieves a row from 'product' as a Product.
 //
 // Generated from index 'product_id_pkey'.
 func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active ` +
-		`FROM app_db.product ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url ` +
+		`FROM product ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)
@@ -154,14 +223,14 @@ func ProductByID(ctx context.Context, db DB, id int) (*Product, error) {
 	return &p, nil
 }
 
-// ProductByProductKey retrieves a row from 'app_db.product' as a Product.
+// ProductByProductKey retrieves a row from 'product' as a Product.
 //
 // Generated from index 'product_key'.
 func ProductByProductKey(ctx context.Context, db DB, productKey string) (*Product, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, name, product_key, active ` +
-		`FROM app_db.product ` +
+		`id, name, product_key, updated_at, created_at, active, price, category, selling_price, quantity, description, image_url ` +
+		`FROM product ` +
 		`WHERE product_key = ?`
 	// run
 	logf(sqlstr, productKey)

@@ -2,17 +2,35 @@
 {{- if $t.Comment -}}
 // {{ $t.Comment | eval $t.GoName }}
 {{- else -}}
-// {{ $t.GoName }} represents a row from '{{ schema $t.SQLName }}'.
+// {{ $t.GoName }} represents a row from '{{ $t.SQLName }}'.
 {{- end }}
 type {{ $t.GoName }} struct {
 {{ range $t.Fields -}}
-	{{ field . }}
+	{{ .GoName }} {{  .Type }} `json:"{{ .GoName }}" db:"{{ .SQLName}}"` // {{.SQLName}}
 {{ end }}
 {{- if $t.PrimaryKeys -}}
 	// xo fields
 	_exists, _deleted bool
 {{ end -}}
 }
+
+type Filter{{ $t.GoName }} struct {
+{{ range $t.Fields -}}
+	{{ .GoName }} *{{  .Type }} // {{.SQLName}}
+{{ end }}
+}
+
+// Apply filter to sqrl {{ $t.GoName }} .
+func ({{ short $t }} *{{ $t.GoName }}) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter Filter{{ $t.GoName }}) bool {
+	{{ range $t.Fields -}}
+		if filter.{{ .GoName }} != nil {
+			sqrlBuilder.Where(sqrl.Eq{ "{{.SQLName}}" : filter.{{ .GoName }} })
+		}
+	{{ end }}
+
+	return true
+}
+
 
 {{ if $t.PrimaryKeys -}}
 // Exists returns true when the {{ $t.GoName }} exists in the database.
@@ -34,6 +52,9 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	case {{ short $t }}._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	{{ short $t }}.UpdatedAt = time.Now()
+	{{ short $t }}.CreatedAt = time.Now()
+	{{ short $t }}.Active = true
 {{ if $t.Manual -}}
 	// insert (manual)
 	{{ sqlstr "insert_manual" $t }}
@@ -112,6 +133,7 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	case {{ short $t }}._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	{{ short $t }}.UpdatedAt = time.Now()
 	// update with {{ if driver "postgres" }}composite {{ end }}primary key
 	{{ sqlstr "update" $t }}
 	// run
@@ -183,10 +205,10 @@ func ({{ short $t }} *{{ $t.GoName }}) Deleted() bool {
 	}
 {{ if eq (len $t.PrimaryKeys) 1 -}}
 	// delete with single primary key
-	{{ sqlstr "delete" $t }}
+	const sqlstr = `UPDATE {{ $t.SQLName }} SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	{{ logf_pkeys $t }}
-	if _, err := {{ db "Exec" (print (short $t) "." (index $t.PrimaryKeys 0).GoName) }}; err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), {{ short $t }}.ID); err != nil {
 		return logerror(err)
 	}
 {{- else -}}

@@ -4,19 +4,81 @@ package entities
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/elgris/sqrl"
 )
 
-// User represents a row from 'app_db.user'.
+// User represents a row from 'user'.
 type User struct {
-	ID       int    `json:"id"`       // id
-	Username string `json:"username"` // username
-	Password string `json:"password"` // password
-	Email    string `json:"email"`    // email
-	Active   bool   `json:"active"`   // active
+	ID          int            `json:"ID" db:"id"`                    // id
+	Username    string         `json:"Username" db:"username"`        // username
+	Password    string         `json:"Password" db:"password"`        // password
+	Email       string         `json:"Email" db:"email"`              // email
+	RoleLabel   string         `json:"RoleLabel" db:"role_label"`     // role_label
+	Permission  int            `json:"Permission" db:"permission"`    // permission
+	Role        string         `json:"Role" db:"role"`                // role
+	Active      bool           `json:"Active" db:"active"`            // active
+	UpdatedAt   time.Time      `json:"UpdatedAt" db:"updated_at"`     // updated_at
+	CreatedAt   time.Time      `json:"CreatedAt" db:"created_at"`     // created_at
+	PhoneNumber sql.NullString `json:"PhoneNumber" db:"phone_number"` // phone_number
 	// xo fields
 	_exists, _deleted bool
+}
+
+type FilterUser struct {
+	ID          *int            // id
+	Username    *string         // username
+	Password    *string         // password
+	Email       *string         // email
+	RoleLabel   *string         // role_label
+	Permission  *int            // permission
+	Role        *string         // role
+	Active      *bool           // active
+	UpdatedAt   *time.Time      // updated_at
+	CreatedAt   *time.Time      // created_at
+	PhoneNumber *sql.NullString // phone_number
+
+}
+
+// Apply filter to sqrl User .
+func (u *User) ApplyFilterSale(sqrlBuilder *sqrl.SelectBuilder, filter FilterUser) bool {
+	if filter.ID != nil {
+		sqrlBuilder.Where(sqrl.Eq{"id": filter.ID})
+	}
+	if filter.Username != nil {
+		sqrlBuilder.Where(sqrl.Eq{"username": filter.Username})
+	}
+	if filter.Password != nil {
+		sqrlBuilder.Where(sqrl.Eq{"password": filter.Password})
+	}
+	if filter.Email != nil {
+		sqrlBuilder.Where(sqrl.Eq{"email": filter.Email})
+	}
+	if filter.RoleLabel != nil {
+		sqrlBuilder.Where(sqrl.Eq{"role_label": filter.RoleLabel})
+	}
+	if filter.Permission != nil {
+		sqrlBuilder.Where(sqrl.Eq{"permission": filter.Permission})
+	}
+	if filter.Role != nil {
+		sqrlBuilder.Where(sqrl.Eq{"role": filter.Role})
+	}
+	if filter.Active != nil {
+		sqrlBuilder.Where(sqrl.Eq{"active": filter.Active})
+	}
+	if filter.UpdatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"updated_at": filter.UpdatedAt})
+	}
+	if filter.CreatedAt != nil {
+		sqrlBuilder.Where(sqrl.Eq{"created_at": filter.CreatedAt})
+	}
+	if filter.PhoneNumber != nil {
+		sqrlBuilder.Where(sqrl.Eq{"phone_number": filter.PhoneNumber})
+	}
+
+	return true
 }
 
 // Exists returns true when the User exists in the database.
@@ -38,15 +100,18 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 	case u._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
+	u.UpdatedAt = time.Now()
+	u.CreatedAt = time.Now()
+	u.Active = true
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO app_db.user (` +
-		`username, password, email, active` +
+	const sqlstr = `INSERT INTO user (` +
+		`username, password, email, role_label, permission, role, active, updated_at, created_at, phone_number` +
 		`) VALUES (` +
-		`?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email, u.Active)
-	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.Active)
+	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber)
+	res, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber)
 	if err != nil {
 		return logerror(err)
 	}
@@ -69,13 +134,14 @@ func (u *User) Update(ctx context.Context, db DB) error {
 	case u._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
+	u.UpdatedAt = time.Now()
 	// update with primary key
-	const sqlstr = `UPDATE app_db.user SET ` +
-		`username = ?, password = ?, email = ?, active = ? ` +
+	const sqlstr = `UPDATE user SET ` +
+		`username = ?, password = ?, email = ?, role_label = ?, permission = ?, role = ?, active = ?, updated_at = ?, created_at = ?, phone_number = ? ` +
 		`WHERE id = ?`
 	// run
-	logf(sqlstr, u.Username, u.Password, u.Email, u.Active, u.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.Active, u.ID); err != nil {
+	logf(sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber, u.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber, u.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -96,16 +162,16 @@ func (u *User) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO app_db.user (` +
-		`id, username, password, email, active` +
+	const sqlstr = `INSERT INTO user (` +
+		`id, username, password, email, role_label, permission, role, active, updated_at, created_at, phone_number` +
 		`) VALUES (` +
-		`?, ?, ?, ?, ?` +
+		`?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?` +
 		`)` +
 		` ON DUPLICATE KEY UPDATE ` +
-		`username = VALUES(username), password = VALUES(password), email = VALUES(email), active = VALUES(active)`
+		`username = VALUES(username), password = VALUES(password), email = VALUES(email), role_label = VALUES(role_label), permission = VALUES(permission), role = VALUES(role), active = VALUES(active), updated_at = VALUES(updated_at), created_at = VALUES(created_at), phone_number = VALUES(phone_number)`
 	// run
-	logf(sqlstr, u.ID, u.Username, u.Password, u.Email, u.Active)
-	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email, u.Active); err != nil {
+	logf(sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber)
+	if _, err := db.ExecContext(ctx, sqlstr, u.ID, u.Username, u.Password, u.Email, u.RoleLabel, u.Permission, u.Role, u.Active, u.UpdatedAt, u.CreatedAt, u.PhoneNumber); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -122,11 +188,10 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM app_db.user ` +
-		`WHERE id = ?`
+	const sqlstr = `UPDATE user SET active = false, updated_at = ? WHERE id = ?`
 	// run
 	logf(sqlstr, u.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.ID); err != nil {
+	if _, err := db.ExecContext(ctx, sqlstr, time.Now(), u.ID); err != nil {
 		return logerror(err)
 	}
 	// set deleted
@@ -134,14 +199,14 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// UserByEmail retrieves a row from 'app_db.user' as a User.
+// UserByEmail retrieves a row from 'user' as a User.
 //
 // Generated from index 'email'.
 func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, username, password, email, active ` +
-		`FROM app_db.user ` +
+		`id, username, password, email, role_label, permission, role, active, updated_at, created_at, phone_number ` +
+		`FROM user ` +
 		`WHERE email = ?`
 	// run
 	logf(sqlstr, email)
@@ -155,14 +220,14 @@ func UserByEmail(ctx context.Context, db DB, email string) (*User, error) {
 	return &u, nil
 }
 
-// UserByID retrieves a row from 'app_db.user' as a User.
+// UserByID retrieves a row from 'user' as a User.
 //
 // Generated from index 'user_id_pkey'.
 func UserByID(ctx context.Context, db DB, id int) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, username, password, email, active ` +
-		`FROM app_db.user ` +
+		`id, username, password, email, role_label, permission, role, active, updated_at, created_at, phone_number ` +
+		`FROM user ` +
 		`WHERE id = ?`
 	// run
 	logf(sqlstr, id)

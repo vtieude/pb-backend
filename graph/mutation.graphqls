@@ -1,4 +1,11 @@
 type Mutation {
-  createUser(input: NewUser!): User! @auth
-  login(email: String!, password: String!): String!
+  createUser(input: NewUser!): User! @adminValidate
+  deleteUser(userId: Int!): Boolean!  @adminValidate
+  editUser(input: EditUserModel!): User!  @auth
+  login(email: String!, password: String!): UserDto!
+  createNewProduct(input: ProductInputModel!): ProductDto!  @adminValidate
+  editProduct(input: ProductInputModel!): Boolean!  @adminValidate
+  deleteProduct(productId: Int!): Boolean!  @adminValidate
+  editProfile(input: EditUserModel!): User! @auth
+  uploadFile(input: ProfileImage!): String! @adminValidate
 }

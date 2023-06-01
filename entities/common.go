@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"pb-backend/graph/model"
 	"time"
 
@@ -16,16 +17,21 @@ import (
 const ConfigKey = "pbconfig"
 
 type PbConfig struct {
-	DbUser  string `yaml:"DbUser"`
-	DbPsw   string `yaml:"DbPsw"`
-	DbName  string `yaml:"DbName"`
-	DbHost  string `yaml:"DbHost"`
-	AppPort string `yaml:"AppPort"`
+	DbUser      string `yaml:"DbUser"`
+	DbPsw       string `yaml:"DbPsw"`
+	DbName      string `yaml:"DbName"`
+	DbHost      string `yaml:"DbHost"`
+	AppPort     string `yaml:"AppPort"`
+	AppProdEnv  bool   `yaml:"AppProdEnv"`
+	ClientEmail string `yaml:"ClientEmail"`
+	PrivateKey  string `yaml:"PrivateKey"`
+	FolderId    string `yaml:"FolderId"`
 }
 
 type MyCustomClaims struct {
-	Username string `json:"username"`
-	ID       int    `json:"userid"`
+	Email string `json:"email"`
+	ID    int    `json:"userid"`
+	Role  string `json:"role"`
 	jwt.StandardClaims
 }
 
@@ -49,11 +55,21 @@ type DBConnection struct {
 
 var sqlxDB *DBConnection
 
-func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
+func OpenConnection(ctx context.Context, log log.Logger) *DBConnection {
 	var cfg PbConfig
 	cfg, ok := ctx.Value(ConfigKey).(PbConfig)
 	if ok {
-		dbConString := fmt.Sprintf("root:%s@tcp(%s)/%s?parseTime=true", cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		dbConString := ""
+		if cfg.AppProdEnv {
+			dbConString = os.Getenv("DATABASE_URL")
+			if dbConString == "" {
+				log.Fatal("$DATABASE_URL is not set")
+			}
+
+		} else {
+			dbConString = fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", cfg.DbUser, cfg.DbPsw, cfg.DbHost, cfg.DbName)
+		}
+		// dbConString = fmt.Sprintf("%s&columnsWithAlias=true", dbConString)
 		db, err := sqlx.Open("mysql", dbConString)
 		if err != nil {
 			panic(err)
@@ -61,7 +77,7 @@ func OpenConnectTion(ctx context.Context, log log.Logger) *DBConnection {
 		// See "Important settings" section.
 		db.SetConnMaxLifetime(time.Minute * 3)
 		db.SetMaxOpenConns(10)
-		db.SetMaxIdleConns(10)
+		db.SetMaxIdleConns(0)
 		sqlxDB = &DBConnection{DB: db, log: log}
 		return sqlxDB
 	}

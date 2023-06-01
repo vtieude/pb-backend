@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"pb-backend/dataloader"
 	"pb-backend/entities"
 	"pb-backend/graph"
-	"pb-backend/modifies"
 	"pb-backend/wiregen"
 	"time"
 
@@ -57,9 +56,12 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 	baseCtx := context.WithValue(context.Background(), "", "")
 	baseCtx = context.WithValue(baseCtx, entities.ConfigKey, cfg)
-	port := cfg.AppPort
+	port := os.Getenv("PORT")
 	if port == "" {
-		port = defaultPort
+		port = cfg.AppPort
+		if port == "" {
+			port = defaultPort
+		}
 	}
 	app, err := wiregen.InitializeApp(baseCtx, *log.Default())
 	if err != nil {
@@ -70,18 +72,17 @@ func main() {
 		Directives: graph.DirectiveRoot{},
 		Complexity: graph.ComplexityRoot{},
 	}
-
-	config.Directives.Auth = modifies.Auth
+	config.Directives.Auth = app.CustomModifies.AuthGraphql
+	config.Directives.AdminValidate = app.CustomModifies.AdminValidate
 	r.Use(app.CustomModifies.LoggingHandler)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(config))
 	srv.SetRecoverFunc(func(ctx context.Context, err interface{}) error {
-		log.Println(fmt.Sprint(err))
 		return errors.New("Internal server error! : ")
 	})
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	r.Handle("/query", srv)
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe("localhost:"+port, r))
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
 func GetConfig() (entities.PbConfig, error) {

@@ -4,19 +4,24 @@ package wiregen
 
 import (
 	"context"
-	"github.com/google/wire"
 	"log"
 	"pb-backend/entities"
 	"pb-backend/graph"
+	"pb-backend/graph/resolvers"
 	"pb-backend/modifies"
 	"pb-backend/services"
+
+	"github.com/google/wire"
 )
 
 var serviceSet = wire.NewSet(
 	services.NewUserService,
+	services.NewProductService,
+	services.NewSaleService,
 	modifies.ModifiesSet,
+	services.NewGoogleService,
 )
-var dbSet = wire.NewSet(entities.OpenConnectTion, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
+var dbSet = wire.NewSet(entities.OpenConnection, wire.Bind(new(entities.DB), new(*entities.DBConnection)))
 
 type App struct {
 	Resolver       *graph.Resolver
@@ -26,6 +31,7 @@ type App struct {
 func InitializeApp(ctx context.Context, log log.Logger) (*App, error) {
 	wire.Build(
 		dbSet,
+		resolvers.NewUserSet,
 		wire.Struct(new(graph.Resolver), "*"),
 		wire.Struct(new(App), "*"),
 		serviceSet,
